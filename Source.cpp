@@ -49,9 +49,9 @@ public:
 		int length;
 
 		//numberfield only
-		float min;
-		float max;
-		float step;
+		int min;
+		int max;
+		int step;
 
 		//selectors only
 		std::string selector_type;
@@ -179,13 +179,13 @@ struct GuiComponentSources {
 	char numberfieldtooltip[64] = { 0 };
 	bool numberfieldtooltipEnabled = false;
 	Rectangle numberfieldstepRec = { 570, 285, 265, 25 };
-	float numberfieldstep = 0;
-	Rectangle numberfieldmaxRec = { 570, 320, 25, 25 };
-	float numberfieldmax = 0;
-	Rectangle numberfieldminRec = { 570, 355, 25, 25 };
-	float numberfieldmin = 0;
-	Rectangle addbuttontextfieldRec = { 500, 405, 100, 30 };
-	Rectangle cancelbuttontextfieldRec = { 610, 405, 100, 30 };
+	int numberfieldstep = 0;
+	Rectangle numberfieldmaxRec = { 570, 320, 265, 25 };
+	int numberfieldmax = 0;
+	Rectangle numberfieldminRec = { 570, 355, 265, 25 };
+	int numberfieldmin = 0;
+	Rectangle addbuttonnumberfieldRec = { 500, 405, 100, 30 };
+	Rectangle cancelbuttonnumberfieldRec = { 610, 405, 100, 30 };
 };
 
 void save(PluginInfo info) {
@@ -549,7 +549,7 @@ int main() {
 				GuiTextBox(sources.textfieldlabelRec, sources.textfieldlabel, 64, sources.textfieldlabelEnabled);
 				DrawText("TextField tooltip source:", 370, 255, 15, WHITE);
 				GuiTextBox(sources.textfieldtooltipRec, sources.textfieldtooltip, 64, sources.textfieldtooltipEnabled);
-				DrawText("Textfield max length:", 370, 290, 15, WHITE);
+				DrawText("TextField max length:", 370, 290, 15, WHITE);
 				GuiSpinner(sources.textfieldlengthRec, "", &sources.textfieldlength, 0, 100, false);
 				DrawText("Validate TextField text:", 370, 325, 15, WHITE);
 				GuiCheckBox(sources.textfieldvalidateRec, "Check to enable", sources.textfieldvalidate);
@@ -591,7 +591,49 @@ int main() {
 				}
 			}
 			else if (current_type == NUMBER_TYPE) {
+				GuiPanel(sources.numberfieldDialog, "NumberField Editor");
+				DrawText("NumberField variable name:", 370, 185, 15, WHITE);
+				GuiTextBox(sources.numberfieldnameRec, sources.numberfieldname, 64, sources.numberfieldnameEnabled);
+				DrawText("NumberField label text:", 370, 220, 15, WHITE);
+				GuiTextBox(sources.numberfieldlabelRec, sources.numberfieldlabel, 64, sources.numberfieldlabelEnabled);
+				DrawText("NumberField tooltip source:", 370, 255, 15, WHITE);
+				GuiTextBox(sources.numberfieldtooltipRec, sources.numberfieldtooltip, 64, sources.numberfieldtooltipEnabled);
+				DrawText("NumberField step amount:", 370, 290, 15, WHITE);
+				GuiSpinner(sources.numberfieldstepRec, "", &sources.numberfieldstep, 0, 10, false);
+				DrawText("NumberField max value:", 370, 325, 15, WHITE);
+				GuiSpinner(sources.numberfieldmaxRec, "", &sources.numberfieldmax, 0, 100, false);
+				DrawText("NumberField min value:", 370, 360, 15, WHITE);
+				GuiSpinner(sources.numberfieldminRec, "", &sources.numberfieldmin, -100, 100, false);
 
+				if (GuiButton(sources.addbuttonnumberfieldRec, "add")) {
+					Components::Widget numberfield;
+					numberfield.component_type = NUMBER_TYPE;
+					numberfield.name = sources.numberfieldname;
+					numberfield.label = sources.numberfieldlabel;
+					numberfield.has_tooltip = sources.numberfieldtooltip;
+					numberfield.step = sources.numberfieldstep;
+					numberfield.max = sources.numberfieldmax;
+					numberfield.min = sources.numberfieldmin;
+					numberfield.page_index = components.indexes.at(sources.selectedPage);
+					components.widgets[sources.selectedPage].push_back(numberfield);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"NumberField - " + (std::string)sources.numberfieldname);
+					*sources.numberfieldname = { 0 };
+					*sources.numberfieldlabel = { 0 };
+					*sources.numberfieldtooltip = { 0 };
+					sources.numberfieldstep = 0;
+					sources.numberfieldmax = 0;
+					sources.numberfieldmin = 0;
+					current_type = NO_TYPE;
+				}
+				if (GuiButton(sources.cancelbuttonnumberfieldRec, "cancel"))
+					current_type = NO_TYPE;
+
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+					sources.numberfieldnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldnameRec);
+					sources.numberfieldlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldlabelRec);
+					sources.numberfieldtooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldtooltipRec);
+				}
 			}
 		}
 
