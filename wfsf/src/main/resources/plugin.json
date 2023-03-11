@@ -1,0 +1,12 @@
+{
+  "id": "ws",
+  "weight": 3,
+  "javaplugin": "net.nerdypuzzle.wfsf.Launcher",
+  "info":  {
+    "name": "wfsf",
+    "version": "1.0",
+    "description": "gegs",
+    "author": "gesdf",
+    "credits": "wdawfw"
+  }
+}
