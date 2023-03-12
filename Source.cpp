@@ -13,6 +13,7 @@
 #include <cctype>
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 
 #define screenWidth 1200
 #define screenHeight 600
@@ -107,10 +108,14 @@ struct GuiComponentSources {
 	int old = -1;
 	int cache;
 
-	Rectangle editingPluginText = { 10, 10, 170, 580 };
+	Rectangle editingPluginText = { 10, 10, 170, 500 };
 	Rectangle mainScrollPane = { 200, 10, 750, 580 };
-	Rectangle mainPaneContent = { 200, 10, 750, 580 };
 
+	//save and export buttons
+	Rectangle savebuttonRec = { 10, 525, 170, 30 };
+	Rectangle exportbuttonRec = { 10, 560, 170, 30 };
+
+	//side panel widgets
 	Rectangle checkboxRect = { 15, 20, 160, 35 };
 	Rectangle textfieldRect = { 15, 60, 160, 35 };
 	Rectangle spinnerRect = { 15, 100, 160, 35 };
@@ -293,7 +298,7 @@ void deleteAllDirs(PluginInfo info) {
 	deleteDir(path4 + info.name);
 }
 
-void buildOrLoadSaves(bool& hasSave, PluginInfo& info) {
+void buildOrLoadSaves(bool& hasSave, PluginInfo& info, GuiComponentSources& sources, Components& components) {
 	buildDir("saves/name/");
 	std::ifstream pluginname("saves/name/plgn.dat");
 	std::string name;
@@ -309,6 +314,111 @@ void buildOrLoadSaves(bool& hasSave, PluginInfo& info) {
 		variables >> info.description;
 		variables >> info.credit;
 		hasSave = true;
+		variables.close();
+	}
+
+	std::ifstream in("saves/" + name + "/plugin.data");
+
+	if (in.is_open()) {
+		std::string temp;
+		in >> temp; in >> temp; //get the string of the pages list numbers
+		size_t pos = 0;
+		while ((pos = temp.find("\\n", pos)) != std::string::npos) { //replace with newline characters
+			temp.replace(pos, 2, "\n");
+			pos += 1;
+		}
+		sources.pages = temp; //set the string to the parsed result
+		in >> temp; in >> temp; //get the int for the pagesCount from the line
+		sources.pagesCount = std::stoi(temp); //convert and set the value
+		for (int i = 0; i < sources.pagesCount; i++) { //iterate through the pages parsed
+			in >> temp; in >> temp; //find the first word of the string
+			std::string newline = ""; //temporary string to hold the value
+			while ((pos = temp.find("INDEX_")) == std::string::npos) { //iterate through the line
+				newline += temp + " ";
+				in >> temp;
+			}
+			temp = "";
+			for (int j = 0; j < newline.size() - 1; j++) //get rid of the last extra space in the string
+				temp += newline[j];
+			newline = temp;
+			pos = 0;
+			while ((pos = newline.find("\\n", pos)) != std::string::npos) { //replace with newline characters in the string
+				newline.replace(pos, 2, "\n");
+				pos += 1;
+			}
+			components.panel_list[i] = newline; //set the list to the parsed string
+			in >> temp; //get the index value
+			components.indexes[i] = std::stoi(temp); //convert and set the value
+		}
+		for (int i = 0; i < sources.pagesCount; i++) { //iterate through the pages again
+			in >> temp; in >> temp; 
+			for (int j = 0; j < components.indexes[i]; j++) { //iterate through the components of the page
+				std::string type;
+				in >> temp; type = temp; in >> temp;
+				Components::Widget comp;
+				in >> temp;
+				comp.page_index = std::stoi(temp); //get the page index, same for all types
+				if (type != "EMPTY_BOX") { //if not empty box, get default attributes (name, label, tooltip)
+					in >> comp.name;
+					in >> comp.label;
+					in >> comp.has_tooltip;
+					if (type == "CHECKBOX") {
+						comp.component_type = CHECKBOX_TYPE;
+						in >> comp.should_append;
+					}
+					else if (type == "TEXTFIELD") {
+						comp.component_type = TEXTFIELD_TYPE;
+						in >> comp.is_validated;
+						in >> comp.has_elementname;
+						in >> temp;
+						comp.length = std::stoi(temp);
+					}
+					else if (type == "NUMBERFIELD") {
+						comp.component_type = NUMBER_TYPE;
+						in >> temp;
+						comp.step = std::stoi(temp);
+						in >> temp;
+						comp.max = std::stoi(temp);
+						in >> temp;
+						comp.min = std::stoi(temp);
+					}
+					else if (type == "TEXTURESELECTOR") {
+						comp.component_type = TEXTURE_TYPE;
+						in >> comp.selector_content;
+					}
+					else if (type == "MODELSELECTOR") {
+						comp.component_type = MODEL_TYPE;
+						in >> comp.selector_content;
+					}
+					else if (type == "ITEMSELECTOR") {
+						comp.component_type = ITEM_TYPE;
+						in >> comp.selector_content;
+					}
+					else if (type == "STATICDROPDOWN") {
+						comp.component_type = DROPDOWN_TYPE;
+						in >> temp;
+						std::string linenew = "";
+						for (int k = 0; k < temp.size(); k++) {
+							if (temp[k] != ',')
+								linenew += temp[k];
+							else {
+								comp.members.push_back(linenew);
+								linenew = "";
+							}
+						}
+						comp.members.push_back(linenew);
+					}
+					components.widgets[i].push_back(comp);
+					in >> temp; //component parsed, move on
+				}
+				else {
+					comp.component_type = EMPTY_BOX;
+					components.widgets[i].push_back(comp);
+					in >> temp; //this is an empty box, move on
+				}
+			}
+			in >> temp; //end of this page's components
+		}
 	}
 
 }
@@ -356,6 +466,122 @@ void buildJavaLauncher(PluginInfo info) {
 	java << "}";
 }
 
+void saveComponentData(GuiComponentSources sources, Components components) {
+	if (!components.widgets.empty()) {
+		std::ifstream pluginname("saves/name/plgn.dat");
+		std::string name;
+		pluginname >> name;
+		pluginname.close();
+
+		std::ofstream out("saves/" + name + "/plugin.data");
+		out << "PAGES_STRING" << " ";
+		std::istringstream stemp(sources.pages);
+		std::string stempstring;
+		while (getline(stemp, stempstring)) {
+			out << stempstring;
+			if (!stemp.eof())
+				out << "\\" << "n";
+		}
+		out << std::endl;
+		out << "PAGES_INT" << " " << std::to_string(sources.pagesCount) << std::endl;
+		for (int i = 0; i < sources.pagesCount; i++) {
+			out << "PAGE_" + std::to_string(i) << " ";
+			std::istringstream iss(components.panel_list.at(i));
+			std::string iterator;
+			while (getline(iss, iterator)) {
+				out << iterator;
+				if (!iss.eof())
+					out << "\\" << "n";
+			}
+			out << std::endl;
+			out << "INDEX_" + std::to_string(i) << " " << components.indexes.at(i) << std::endl;
+		}
+		for (int i = 0; i < sources.pagesCount; i++) {
+			out << "PAGE_" << std::to_string(i) << "_COMPONENTS [" << std::endl;
+			for (Components::Widget widget : components.widgets[i]) {
+				if (widget.component_type == EMPTY_BOX) {
+					out << "EMPTY_BOX {" << std::endl;
+					out << std::to_string(widget.page_index) << std::endl;
+					out << "}" << std::endl;
+				}
+				else {
+					ComponentType current_type = NO_TYPE;
+					switch (widget.component_type) {
+					case CHECKBOX_TYPE:
+						out << "CHECKBOX {\n";
+						current_type = CHECKBOX_TYPE;
+						break;
+					case TEXTFIELD_TYPE:
+						out << "TEXTFIELD {\n";
+						current_type = TEXTFIELD_TYPE;
+						break;
+					case NUMBER_TYPE:
+						out << "NUMBERFIELD {\n";
+						current_type = NUMBER_TYPE;
+						break;
+					case TEXTURE_TYPE:
+						out << "TEXTURESELECTOR {\n";
+						current_type = TEXTURE_TYPE;
+						break;
+					case MODEL_TYPE:
+						out << "MODELSELECTOR {\n";
+						current_type = MODEL_TYPE;
+						break;
+					case ITEM_TYPE:
+						out << "ITEMSELECTOR {\n";
+						current_type = ITEM_TYPE;
+						break;
+					case DROPDOWN_TYPE:
+						out << "STATICDROPDOWN {\n";
+						current_type = DROPDOWN_TYPE;
+						break;
+					}
+					out << std::to_string(widget.page_index) << std::endl;
+					out << widget.name << std::endl;
+					out << widget.label << std::endl;
+					out << widget.has_tooltip << std::endl;
+					switch (current_type) {
+					case CHECKBOX_TYPE:
+						out << widget.should_append << std::endl;
+						break;
+					case TEXTFIELD_TYPE:
+						out << widget.is_validated << std::endl;
+						out << widget.has_elementname << std::endl;
+						out << std::to_string(widget.length) << std::endl;
+						break;
+					case NUMBER_TYPE:
+						out << std::to_string(widget.step) << std::endl;
+						out << std::to_string(widget.max) << std::endl;
+						out << std::to_string(widget.min) << std::endl;
+						break;
+					case TEXTURE_TYPE:
+					case MODEL_TYPE:
+					case ITEM_TYPE:
+						out << widget.selector_content << std::endl;
+						break;
+					case DROPDOWN_TYPE:
+						bool first = true;
+						for (std::string member : widget.members) {
+							if (first) {
+								first = false;
+								out << member;
+							}
+							else
+								out << "," << member;
+						}
+						out << std::endl;
+						break;
+					}
+
+					out << "}" << std::endl;
+				}
+			}
+			out << "]" << std::endl;
+		}
+		out.close();
+	}
+}
+
 int main() {
 
 	Image icon = LoadImage("mcreator.png");
@@ -399,7 +625,7 @@ int main() {
 	Texture2D texture = LoadTexture("mcreator.png");
 
 	// IMPORTANT
-	buildOrLoadSaves(hasSaveFile, info);
+	buildOrLoadSaves(hasSaveFile, info, sources, components);
 
 	while (!WindowShouldClose()) {
 
@@ -575,6 +801,10 @@ int main() {
 			}
 			GuiGroupBox(sources.pageborderRec, "Pages");
 			sources.selectedPage = GuiListView(sources.pagelistRec, sources.pages.c_str(), &sources.pageIndex, sources.selectedPage);
+
+			if (GuiButton(sources.savebuttonRec, "save plugin"))
+				saveComponentData(sources, components);
+			GuiButton(sources.exportbuttonRec, "export plugin");
 		}
 
 		if (current_type != NO_TYPE) {
@@ -716,6 +946,7 @@ int main() {
 				if (GuiButton(sources.addbuttonemptyboxRec, "add")) {
 					Components::Widget emptybox;
 					emptybox.component_type = EMPTY_BOX;
+					emptybox.page_index = components.indexes[sources.selectedPage];
 					components.widgets[sources.selectedPage].push_back(emptybox);
 					components.indexes[sources.selectedPage]++;
 					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Empty Box");
@@ -918,13 +1149,14 @@ int main() {
 					std::vector<std::string> members;
 					std::string member = "";
 					for (int i = 0; i < (sizeof(sources.dropdownmembers) / sizeof(char)) - 1; i++) {
-						if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',')
+						if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',' && sources.dropdownmembers[i] != NULL)
 							member += sources.dropdownmembers[i];
 						else if (sources.dropdownmembers[i] == ',') {
 							members.push_back(member);
 							member = "";
 						}
 					}
+					members.push_back(member);
 					dropdown.members = members;
 					dropdown.page_index = components.indexes.at(sources.selectedPage);
 					components.widgets[sources.selectedPage].push_back(dropdown);

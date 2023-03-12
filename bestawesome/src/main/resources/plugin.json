@@ -1,0 +1,12 @@
+{
+  "id": "best_awesome",
+  "weight": 8,
+  "javaplugin": "net.nerdypuzzle.bestawesome.Launcher",
+  "info":  {
+    "name": "bestawesome",
+    "version": "1.0",
+    "description": "mom",
+    "author": "ur",
+    "credits": "i"
+  }
+}
