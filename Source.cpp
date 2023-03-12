@@ -54,7 +54,6 @@ public:
 		int step;
 
 		//selectors only
-		std::string selector_type;
 		std::string selector_content;
 
 		//static dropdown only
@@ -186,6 +185,83 @@ struct GuiComponentSources {
 	int numberfieldmin = 0;
 	Rectangle addbuttonnumberfieldRec = { 500, 405, 100, 30 };
 	Rectangle cancelbuttonnumberfieldRec = { 610, 405, 100, 30 };
+
+	//add empty box
+	Rectangle emptyboxDialog = { (screenWidth - 500) / 2, (screenHeight - 100) / 2, 500, 100 };
+	Rectangle addbuttonemptyboxRec = { 500, 295, 100, 30 };
+	Rectangle cancelbuttonemptyboxRec = { 610, 295, 100, 30 };\
+
+	//add texture selector
+	Rectangle textureselectorDialog = { (screenWidth - 500) / 2, (screenHeight - 280) / 2, 500, 280 };
+	Rectangle textureselectornameRec = { 570, 195, 265, 25 };
+	char textureselectorname[64] = { 0 };
+	bool textureselectornameEnabled = false;
+	Rectangle textureselectorlabelRec = { 570, 230, 265, 25 };
+	char textureselectorlabel[64] = { 0 };
+	bool textureselectorlabelEnabled = false;
+	Rectangle textureselectortooltipRec = { 570, 265, 265, 25 };
+	char textureselectortooltip[64] = { 0 };
+	bool textureselectortooltipEnabled = false;
+	Rectangle textureselectortypeRec = { 570, 300, 265, 25 };
+	std::string textureselectortext = "BLOCK\nITEM\nENTITY\nEFFECT\nPARTICLE\nSCREEN\nARMOR\nOTHER";
+	int textureselectorindex = 0;
+	bool textureselectorEnabled = false;
+	Rectangle addbuttontextureRec = { 500, 385, 100, 30 };
+	Rectangle cancelbuttontextureRec = { 610, 385, 100, 30 };
+
+	//add model selector
+	Rectangle modelselectorDialog = { (screenWidth - 500) / 2, (screenHeight - 280) / 2, 500, 280 };
+	Rectangle modelselectornameRec = { 570, 195, 265, 25 };
+	char modelselectorname[64] = { 0 };
+	bool modelselectornameEnabled = false;
+	Rectangle modelselectorlabelRec = { 570, 230, 265, 25 };
+	char modelselectorlabel[64] = { 0 };
+	bool modelselectorlabelEnabled = false;
+	Rectangle modelselectortooltipRec = { 570, 265, 265, 25 };
+	char modelselectortooltip[64] = { 0 };
+	bool modelselectortooltipEnabled = false;
+	Rectangle modelselectortypeRec = { 570, 300, 265, 25 };
+	std::string modelselectortext = "JAVA\nJSON\nOBJ";
+	int modelselectorindex = 0;
+	bool modelselectorEnabled = false;
+	Rectangle addbuttonmodelRec = { 500, 385, 100, 30 };
+	Rectangle cancelbuttonmodelRec = { 610, 385, 100, 30 };
+
+	//add item selector
+	Rectangle itemselectorDialog = { (screenWidth - 500) / 2, (screenHeight - 280) / 2, 500, 280 };
+	Rectangle itemselectornameRec = { 570, 195, 265, 25 };
+	char itemselectorname[64] = { 0 };
+	bool itemselectornameEnabled = false;
+	Rectangle itemselectorlabelRec = { 570, 230, 265, 25 };
+	char itemselectorlabel[64] = { 0 };
+	bool itemselectorlabelEnabled = false;
+	Rectangle itemselectortooltipRec = { 570, 265, 265, 25 };
+	char itemselectortooltip[64] = { 0 };
+	bool itemselectortooltipEnabled = false;
+	Rectangle itemselectortypeRec = { 570, 300, 265, 25 };
+	std::string itemselectortext = "ITEMS\nBLOCKS\nBOTH";
+	int itemselectorindex = 0;
+	bool itemselectorEnabled = false;
+	Rectangle addbuttonitemRec = { 500, 385, 100, 30 };
+	Rectangle cancelbuttonitemRec = { 610, 385, 100, 30 };
+
+	//add static dropdown
+	Rectangle dropdownDialog = { (screenWidth - 500) / 2, (screenHeight - 280) / 2, 500, 280 };
+	Rectangle dropdownnameRec = { 570, 195, 265, 25 };
+	char dropdownname[64] = { 0 };
+	bool dropdownnameEnabled = false;
+	Rectangle dropdownlabelRec = { 570, 230, 265, 25 };
+	char dropdownlabel[64] = { 0 };
+	bool dropdownlabelEnabled = false;
+	Rectangle dropdowntooltipRec = { 570, 265, 265, 25 };
+	char dropdowntooltip[64] = { 0 };
+	bool dropdowntooltipEnabled = false;
+	Rectangle dropdownmembersRec = { 570, 300, 265, 25 };
+	char dropdownmembers[128] = { 0 };
+	bool dropdownmembersEnabled = false;
+	Rectangle addbuttondropdownRec = { 500, 385, 100, 30 };
+	Rectangle cancelbuttondropdownRec = { 610, 385, 100, 30 };
+
 };
 
 void save(PluginInfo info) {
@@ -633,6 +709,242 @@ int main() {
 					sources.numberfieldnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldnameRec);
 					sources.numberfieldlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldlabelRec);
 					sources.numberfieldtooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldtooltipRec);
+				}
+			}
+			else if (current_type == EMPTY_BOX) {
+				GuiPanel(sources.emptyboxDialog, "Empty Box Editor");
+				if (GuiButton(sources.addbuttonemptyboxRec, "add")) {
+					Components::Widget emptybox;
+					emptybox.component_type = EMPTY_BOX;
+					components.widgets[sources.selectedPage].push_back(emptybox);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Empty Box");
+					current_type = NO_TYPE;
+				}
+				if (GuiButton(sources.cancelbuttonemptyboxRec, "cancel"))
+					current_type = NO_TYPE;
+			}
+			else if (current_type == TEXTURE_TYPE) {
+				GuiPanel(sources.textureselectorDialog, "Texture Selector Editor");
+				DrawText("Selector variable name:", 370, 200, 15, WHITE);
+				GuiTextBox(sources.textureselectornameRec, sources.textureselectorname, 64, sources.textureselectornameEnabled);
+				DrawText("Selector label text:", 370, 235, 15, WHITE);
+				GuiTextBox(sources.textureselectorlabelRec, sources.textureselectorlabel, 64, sources.textureselectorlabelEnabled);
+				DrawText("Selector tooltip source:", 370, 270, 15, WHITE);
+				GuiTextBox(sources.textureselectortooltipRec, sources.textureselectortooltip, 64, sources.textureselectortooltipEnabled);
+				DrawText("Selector texture type:", 370, 305, 15, WHITE);
+
+				if (GuiButton(sources.addbuttontextureRec, "add")) {
+					Components::Widget texture_selector;
+					texture_selector.component_type = TEXTURE_TYPE;
+					texture_selector.name = sources.textureselectorname;
+					texture_selector.label = sources.textureselectorlabel;
+					texture_selector.has_tooltip = sources.textureselectortooltip;
+					switch (sources.textureselectorindex) {
+						case 0:
+							texture_selector.selector_content = "block_textures";
+							break;
+						case 1:
+							texture_selector.selector_content = "item_textures";
+							break;
+						case 2:
+							texture_selector.selector_content = "entity_textures";
+							break;
+						case 3:
+							texture_selector.selector_content = "effect_textures";
+							break;
+						case 4:
+							texture_selector.selector_content = "particle_textures";
+							break;
+						case 5:
+							texture_selector.selector_content = "screen_textures";
+							break;
+						case 6:
+							texture_selector.selector_content = "armor_textures";
+							break;
+						case 7:
+							texture_selector.selector_content = "other_textures";
+							break;
+					}
+					texture_selector.page_index = components.indexes.at(sources.selectedPage);
+					components.widgets[sources.selectedPage].push_back(texture_selector);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Texture Selector - " + (std::string)sources.textureselectorname);
+					*sources.textureselectorname = { 0 };
+					*sources.textureselectorlabel = { 0 };
+					*sources.textureselectortooltip = { 0 };
+					sources.textureselectorEnabled = false;
+					sources.textureselectorindex = 0;
+					current_type = NO_TYPE;
+				}
+
+				GuiDropdownBox(sources.textureselectortypeRec, sources.textureselectortext.c_str(), &sources.textureselectorindex, sources.textureselectorEnabled);
+
+				if (!sources.textureselectorEnabled)
+					if (GuiButton(sources.cancelbuttontextureRec, "cancel"))
+						current_type = NO_TYPE;
+
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+					sources.textureselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textureselectornameRec);
+					sources.textureselectorlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textureselectorlabelRec);
+					sources.textureselectortooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textureselectortooltipRec);
+					if (CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textureselectortypeRec))
+						sources.textureselectorEnabled = !sources.textureselectorEnabled;
+				}
+			}
+			else if (current_type == MODEL_TYPE) {
+				GuiPanel(sources.modelselectorDialog, "Model Selector Editor");
+				DrawText("Selector variable name:", 370, 200, 15, WHITE);
+				GuiTextBox(sources.modelselectornameRec, sources.modelselectorname, 64, sources.modelselectornameEnabled);
+				DrawText("Selector label text:", 370, 235, 15, WHITE);
+				GuiTextBox(sources.modelselectorlabelRec, sources.modelselectorlabel, 64, sources.modelselectorlabelEnabled);
+				DrawText("Selector tooltip source:", 370, 270, 15, WHITE);
+				GuiTextBox(sources.modelselectortooltipRec, sources.modelselectortooltip, 64, sources.modelselectortooltipEnabled);
+				DrawText("Selector texture type:", 370, 305, 15, WHITE);
+
+				if (GuiButton(sources.addbuttonmodelRec, "add")) {
+					Components::Widget model_selector;
+					model_selector.component_type = MODEL_TYPE;
+					model_selector.name = sources.modelselectorname;
+					model_selector.label = sources.modelselectorlabel;
+					model_selector.has_tooltip = sources.modelselectortooltip;
+					switch (sources.modelselectorindex) {
+					case 0:
+						model_selector.selector_content = "java_models";
+						break;
+					case 1:
+						model_selector.selector_content = "json_models";
+						break;
+					case 2:
+						model_selector.selector_content = "obj_models";
+						break;
+					}
+					model_selector.page_index = components.indexes.at(sources.selectedPage);
+					components.widgets[sources.selectedPage].push_back(model_selector);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Model Selector - " + (std::string)sources.modelselectorname);
+					*sources.modelselectorname = { 0 };
+					*sources.modelselectorlabel = { 0 };
+					*sources.modelselectortooltip = { 0 };
+					sources.modelselectorEnabled = false;
+					sources.modelselectorindex = 0;
+					current_type = NO_TYPE;
+				}
+
+				GuiDropdownBox(sources.modelselectortypeRec, sources.modelselectortext.c_str(), &sources.modelselectorindex, sources.modelselectorEnabled);
+
+				if (!sources.modelselectorEnabled)
+					if (GuiButton(sources.cancelbuttonmodelRec, "cancel"))
+						current_type = NO_TYPE;
+
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+					sources.modelselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.modelselectornameRec);
+					sources.modelselectorlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.modelselectorlabelRec);
+					sources.modelselectortooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.modelselectortooltipRec);
+					if (CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.modelselectortypeRec))
+						sources.modelselectorEnabled = !sources.modelselectorEnabled;
+				}
+			}
+			else if (current_type == ITEM_TYPE) {
+				GuiPanel(sources.itemselectorDialog, "Item Selector Editor");
+				DrawText("Selector variable name:", 370, 200, 15, WHITE);
+				GuiTextBox(sources.itemselectornameRec, sources.itemselectorname, 64, sources.itemselectornameEnabled);
+				DrawText("Selector label text:", 370, 235, 15, WHITE);
+				GuiTextBox(sources.itemselectorlabelRec, sources.itemselectorlabel, 64, sources.itemselectorlabelEnabled);
+				DrawText("Selector tooltip source:", 370, 270, 15, WHITE);
+				GuiTextBox(sources.itemselectortooltipRec, sources.itemselectortooltip, 64, sources.itemselectortooltipEnabled);
+				DrawText("Selector texture type:", 370, 305, 15, WHITE);
+
+				if (GuiButton(sources.addbuttonitemRec, "add")) {
+					Components::Widget item_selector;
+					item_selector.component_type = ITEM_TYPE;
+					item_selector.name = sources.itemselectorname;
+					item_selector.label = sources.itemselectorlabel;
+					item_selector.has_tooltip = sources.itemselectortooltip;
+					switch (sources.itemselectorindex) {
+					case 0:
+						item_selector.selector_content = "items";
+						break;
+					case 1:
+						item_selector.selector_content = "blocks";
+						break;
+					case 2:
+						item_selector.selector_content = "itemsandblocks";
+						break;
+					}
+					item_selector.page_index = components.indexes.at(sources.selectedPage);
+					components.widgets[sources.selectedPage].push_back(item_selector);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Item Selector - " + (std::string)sources.itemselectorname);
+					*sources.itemselectorname = { 0 };
+					*sources.itemselectorlabel = { 0 };
+					*sources.itemselectortooltip = { 0 };
+					sources.itemselectorEnabled = false;
+					sources.itemselectorindex = 0;
+					current_type = NO_TYPE;
+				}
+
+				GuiDropdownBox(sources.itemselectortypeRec, sources.itemselectortext.c_str(), &sources.itemselectorindex, sources.itemselectorEnabled);
+
+				if (!sources.itemselectorEnabled)
+					if (GuiButton(sources.cancelbuttonitemRec, "cancel"))
+						current_type = NO_TYPE;
+
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+					sources.itemselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectornameRec);
+					sources.itemselectorlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectorlabelRec);
+					sources.itemselectortooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectortooltipRec);
+					if (CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectortypeRec))
+						sources.itemselectorEnabled = !sources.itemselectorEnabled;
+				}
+			}
+			else if (current_type == DROPDOWN_TYPE) {
+				GuiPanel(sources.dropdownDialog, "Dropdown Editor");
+				DrawText("Dropdown variable name:", 370, 200, 15, WHITE);
+				GuiTextBox(sources.dropdownnameRec, sources.dropdownname, 64, sources.dropdownnameEnabled);
+				DrawText("Dropdown label text:", 370, 235, 15, WHITE);
+				GuiTextBox(sources.dropdownlabelRec, sources.dropdownlabel, 64, sources.dropdownlabelEnabled);
+				DrawText("Dropdown tooltip source:", 370, 270, 15, WHITE);
+				GuiTextBox(sources.dropdowntooltipRec, sources.dropdowntooltip, 64, sources.dropdowntooltipEnabled);
+				DrawText("Dropdown static members:", 370, 305, 15, WHITE);
+				GuiTextBox(sources.dropdownmembersRec, sources.dropdownmembers, 64, sources.dropdownmembersEnabled);
+
+				if (GuiButton(sources.addbuttondropdownRec, "add")) {
+					Components::Widget dropdown;
+					dropdown.component_type = DROPDOWN_TYPE;
+					dropdown.name = sources.dropdownname;
+					dropdown.label = sources.dropdownlabel;
+					dropdown.has_tooltip = sources.dropdowntooltip;
+					std::vector<std::string> members;
+					std::string member = "";
+					for (int i = 0; i < (sizeof(sources.dropdownmembers) / sizeof(char)) - 1; i++) {
+						if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',')
+							member += sources.dropdownmembers[i];
+						else if (sources.dropdownmembers[i] == ',') {
+							members.push_back(member);
+							member = "";
+						}
+					}
+					dropdown.members = members;
+					dropdown.page_index = components.indexes.at(sources.selectedPage);
+					components.widgets[sources.selectedPage].push_back(dropdown);
+					components.indexes[sources.selectedPage]++;
+					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Static Dropdown - " + (std::string)sources.dropdownname);
+					*sources.dropdownname = { 0 };
+					*sources.dropdownlabel = { 0 };
+					*sources.dropdowntooltip = { 0 };
+					*sources.dropdownmembers = { 0 };
+					current_type = NO_TYPE;
+				}
+
+				if (GuiButton(sources.cancelbuttondropdownRec, "cancel"))
+					current_type = NO_TYPE;
+
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+					sources.dropdownnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.dropdownnameRec);
+					sources.dropdownlabelEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.dropdownlabelRec);
+					sources.dropdowntooltipEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.dropdowntooltipRec);
+					sources.dropdownmembersEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.dropdownmembersRec);
 				}
 			}
 		}
