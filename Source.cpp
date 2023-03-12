@@ -111,6 +111,9 @@ struct GuiComponentSources {
 	Rectangle editingPluginText = { 10, 10, 170, 500 };
 	Rectangle mainScrollPane = { 200, 10, 750, 580 };
 
+	//edit, delete, main menu buttons
+	Rectangle editwidgetRec = { 965, 10, 225, 35 };
+
 	//save and export buttons
 	Rectangle savebuttonRec = { 10, 525, 170, 30 };
 	Rectangle exportbuttonRec = { 10, 560, 170, 30 };
@@ -360,7 +363,17 @@ void buildOrLoadSaves(bool& hasSave, PluginInfo& info, GuiComponentSources& sour
 				comp.page_index = std::stoi(temp); //get the page index, same for all types
 				if (type != "EMPTY_BOX") { //if not empty box, get default attributes (name, label, tooltip)
 					in >> comp.name;
-					in >> comp.label;
+					std::string label = "";
+					std::string temps;
+					in >> temps;
+					while (temps != "\\n") { //get the entire label instead of the first word
+						label += temps + " ";
+						in >> temps;
+					}
+					temps = "";
+					for (int p = 0; p < label.size() - 1; p++)
+						temps += label[p];
+					comp.label = temps;
 					in >> comp.has_tooltip;
 					if (type == "CHECKBOX") {
 						comp.component_type = CHECKBOX_TYPE;
@@ -538,7 +551,7 @@ void saveComponentData(GuiComponentSources sources, Components components) {
 					}
 					out << std::to_string(widget.page_index) << std::endl;
 					out << widget.name << std::endl;
-					out << widget.label << std::endl;
+					out << widget.label << " \\n" << std::endl;
 					out << widget.has_tooltip << std::endl;
 					switch (current_type) {
 					case CHECKBOX_TYPE:
@@ -612,6 +625,10 @@ int main() {
 	bool creatingPlugin = false;
 	bool editingPlugin = false;
 	bool canSetType = false;
+	bool editingWidget = false;
+
+	int widgetIndex[2];
+	int tempIndex;
 
 	Camera3D camera = { 0 };
 	camera.position = { 30.0f, 20.0f, 30.0f };
@@ -781,7 +798,7 @@ int main() {
 					sources.selected = -1;
 				}
 			}
-			
+
 			sources.old = view;
 
 			if (GuiButton(sources.addpagebuttonRec, "add page")) {
@@ -799,8 +816,112 @@ int main() {
 					sources.pages = newStr;
 				}
 			}
+
 			GuiGroupBox(sources.pageborderRec, "Pages");
 			sources.selectedPage = GuiListView(sources.pagelistRec, sources.pages.c_str(), &sources.pageIndex, sources.selectedPage);
+
+			if (GuiButton(sources.editwidgetRec, "edit widget")) {
+				editingWidget = true;
+				for (int i = 0; i < components.widgets[sources.selectedPage].size(); i++)
+					if (components.widgets[sources.selectedPage][i].page_index == sources.cache) {
+						Components::Widget tempWidget = components.widgets[sources.selectedPage][i];
+						ComponentType type = tempWidget.component_type;
+						widgetIndex[0] = sources.selectedPage;
+						widgetIndex[1] = i;
+						tempIndex = tempWidget.page_index;
+						switch (type) {
+						case CHECKBOX_TYPE:
+							std::strcpy(sources.checkboxname, tempWidget.name.c_str());
+							std::strcpy(sources.checkboxlabel, tempWidget.label.c_str());
+							std::strcpy(sources.checkboxtooltip, tempWidget.has_tooltip.c_str());
+							sources.checkboxappendEnabled = (tempWidget.should_append == "yes" ? true : false);
+							break;
+						case TEXTFIELD_TYPE:
+							std::strcpy(sources.textfieldname, tempWidget.name.c_str());
+							std::strcpy(sources.textfieldlabel, tempWidget.label.c_str());
+							std::strcpy(sources.textfieldtooltip, tempWidget.has_tooltip.c_str());
+							sources.textfieldlength = tempWidget.length;
+							sources.textfieldvalidate = (tempWidget.is_validated == "yes" ? true : false);
+							sources.textfieldelementtext = (tempWidget.has_elementname == "yes" ? true : false);
+							break;
+						case NUMBER_TYPE:
+							std::strcpy(sources.numberfieldname, tempWidget.name.c_str());
+							std::strcpy(sources.numberfieldlabel, tempWidget.label.c_str());
+							std::strcpy(sources.numberfieldtooltip, tempWidget.has_tooltip.c_str());
+							sources.numberfieldstep = tempWidget.step;
+							sources.numberfieldmax = tempWidget.max;
+							sources.numberfieldmin = tempWidget.min;
+							break;
+						case TEXTURE_TYPE:
+							std::strcpy(sources.textureselectorname, tempWidget.name.c_str());
+							std::strcpy(sources.textureselectorlabel, tempWidget.label.c_str());
+							std::strcpy(sources.textureselectortooltip, tempWidget.has_tooltip.c_str());
+							int index1;
+							if (tempWidget.selector_content == "block_textures")
+								index1 = 0;
+							else if (tempWidget.selector_content == "item_textures")
+								index1 = 1;
+							else if (tempWidget.selector_content == "entity_textures")
+								index1 = 2;
+							else if (tempWidget.selector_content == "effect_textures")
+								index1 = 3;
+							else if (tempWidget.selector_content == "particle_textures")
+								index1 = 4;
+							else if (tempWidget.selector_content == "screen_textures")
+								index1 = 5;
+							else if (tempWidget.selector_content == "armor_textures")
+								index1 = 6;
+							else if (tempWidget.selector_content == "other_textures")
+								index1 = 7;
+							sources.textureselectorindex = index1;
+							break;
+						case MODEL_TYPE:
+							std::strcpy(sources.modelselectorname, tempWidget.name.c_str());
+							std::strcpy(sources.modelselectorlabel, tempWidget.label.c_str());
+							std::strcpy(sources.modelselectortooltip, tempWidget.has_tooltip.c_str());
+							int index2;
+							if (tempWidget.selector_content == "java_models")
+								index2 = 0;
+							else if (tempWidget.selector_content == "json_models")
+								index2 = 1;
+							else if (tempWidget.selector_content == "obj_models")
+								index2 = 2;
+							sources.modelselectorindex = index2;
+							break;
+						case ITEM_TYPE:
+							std::strcpy(sources.itemselectorname, tempWidget.name.c_str());
+							std::strcpy(sources.itemselectorlabel, tempWidget.label.c_str());
+							std::strcpy(sources.itemselectortooltip, tempWidget.has_tooltip.c_str());
+							int index3;
+							if (tempWidget.selector_content == "items")
+								index3 = 0;
+							else if (tempWidget.selector_content == "blocks")
+								index3 = 1;
+							else if (tempWidget.selector_content == "itemsandblocks")
+								index3 = 2;
+							sources.itemselectorindex = index3;
+							break;
+						case DROPDOWN_TYPE:
+							std::strcpy(sources.dropdownname, tempWidget.name.c_str());
+							std::strcpy(sources.dropdownlabel, tempWidget.label.c_str());
+							std::strcpy(sources.dropdowntooltip, tempWidget.has_tooltip.c_str());
+							bool first1 = true;
+							std::string membersStr = "";
+							for (std::string member : tempWidget.members) {
+								if (first1) {
+									first1 = false;
+									membersStr += member;
+								}
+								else
+									membersStr += ", " + member;
+							}
+							std::strcpy(sources.dropdownmembers, membersStr.c_str());
+							break;
+						}
+						if (type != EMPTY_BOX)
+							current_type = type;
+					}
+			}
 
 			if (GuiButton(sources.savebuttonRec, "save plugin"))
 				saveComponentData(sources, components);
@@ -819,25 +940,51 @@ int main() {
 				DrawText("Append common label:", 370, 305, 15, WHITE);
 				GuiCheckBox(sources.checkboxappendRec, "Check to enable", sources.checkboxappendEnabled);
 
-				if (GuiButton(sources.addbuttonRec, "add")) {
-					Components::Widget checkbox;
-					checkbox.component_type = CHECKBOX_TYPE;
-					checkbox.name = sources.checkboxname;
-					checkbox.label = sources.checkboxlabel;
-					checkbox.has_tooltip = sources.checkboxtooltip;
-					checkbox.page_index = components.indexes.at(sources.selectedPage);
-					checkbox.should_append = (sources.checkboxappendEnabled ? "yes" : "no");
-					components.widgets[sources.selectedPage].push_back(checkbox);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Checkbox - " + (std::string)sources.checkboxname);
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttonRec, "add")) {
+						Components::Widget checkbox;
+						checkbox.component_type = CHECKBOX_TYPE;
+						checkbox.name = sources.checkboxname;
+						checkbox.label = sources.checkboxlabel;
+						checkbox.has_tooltip = sources.checkboxtooltip;
+						checkbox.page_index = components.indexes.at(sources.selectedPage);
+						checkbox.should_append = (sources.checkboxappendEnabled ? "yes" : "no");
+						components.widgets[sources.selectedPage].push_back(checkbox);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Checkbox - " + (std::string)sources.checkboxname);
+						*sources.checkboxname = { 0 };
+						*sources.checkboxlabel = { 0 };
+						*sources.checkboxtooltip = { 0 };
+						sources.checkboxappendEnabled = false;
+						current_type = NO_TYPE;
+					}
+				}
+				else {
+					if (GuiButton(sources.addbuttonRec, "edit")) {
+						Components::Widget checkbox;
+						checkbox.component_type = CHECKBOX_TYPE;
+						checkbox.name = sources.checkboxname;
+						checkbox.label = sources.checkboxlabel;
+						checkbox.has_tooltip = sources.checkboxtooltip;
+						checkbox.page_index = tempIndex;
+						checkbox.should_append = (sources.checkboxappendEnabled ? "yes" : "no");
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = checkbox;
+						*sources.checkboxname = { 0 };
+						*sources.checkboxlabel = { 0 };
+						*sources.checkboxtooltip = { 0 };
+						sources.checkboxappendEnabled = false;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
+				}
+				if (GuiButton(sources.cancelbuttonRec, "cancel")) {
+					current_type = NO_TYPE;
 					*sources.checkboxname = { 0 };
 					*sources.checkboxlabel = { 0 };
 					*sources.checkboxtooltip = { 0 };
 					sources.checkboxappendEnabled = false;
-					current_type = NO_TYPE;
+					editingWidget = false;
 				}
-				if (GuiButton(sources.cancelbuttonRec, "cancel"))
-					current_type = NO_TYPE;
 				
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.checkboxnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.checkboxnameRec);
@@ -862,29 +1009,61 @@ int main() {
 				DrawText("Fill with element name:", 370, 360, 15, WHITE);
 				GuiCheckBox(sources.textfieldelementtextRec, "Check to enable", sources.textfieldelementtext);
 
-				if (GuiButton(sources.addbuttontextfieldRec, "add")) {
-					Components::Widget textfield;
-					textfield.component_type = TEXTFIELD_TYPE;
-					textfield.name = sources.textfieldname;
-					textfield.label = sources.textfieldlabel;
-					textfield.has_tooltip = sources.textfieldtooltip;
-					textfield.length = sources.textfieldlength;
-					textfield.is_validated = (sources.textfieldvalidate ? "yes" : "no");
-					textfield.has_elementname = (sources.textfieldelementtext ? "yes" : "no");
-					textfield.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(textfield);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"TextField - " + (std::string)sources.textfieldname);
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttontextfieldRec, "add")) {
+						Components::Widget textfield;
+						textfield.component_type = TEXTFIELD_TYPE;
+						textfield.name = sources.textfieldname;
+						textfield.label = sources.textfieldlabel;
+						textfield.has_tooltip = sources.textfieldtooltip;
+						textfield.length = sources.textfieldlength;
+						textfield.is_validated = (sources.textfieldvalidate ? "yes" : "no");
+						textfield.has_elementname = (sources.textfieldelementtext ? "yes" : "no");
+						textfield.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(textfield);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"TextField - " + (std::string)sources.textfieldname);
+						*sources.textfieldname = { 0 };
+						*sources.textfieldlabel = { 0 };
+						*sources.textfieldtooltip = { 0 };
+						sources.textfieldlength = 0;
+						sources.textfieldvalidate = false;
+						sources.textfieldelementtext = false;
+						current_type = NO_TYPE;
+					}
+				}
+				else {
+					if (GuiButton(sources.addbuttontextfieldRec, "edit")) {
+						Components::Widget textfield;
+						textfield.component_type = TEXTFIELD_TYPE;
+						textfield.name = sources.textfieldname;
+						textfield.label = sources.textfieldlabel;
+						textfield.has_tooltip = sources.textfieldtooltip;
+						textfield.length = sources.textfieldlength;
+						textfield.is_validated = (sources.textfieldvalidate ? "yes" : "no");
+						textfield.has_elementname = (sources.textfieldelementtext ? "yes" : "no");
+						textfield.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = textfield;
+						*sources.textfieldname = { 0 };
+						*sources.textfieldlabel = { 0 };
+						*sources.textfieldtooltip = { 0 };
+						sources.textfieldlength = 0;
+						sources.textfieldvalidate = false;
+						sources.textfieldelementtext = false;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
+				}
+				if (GuiButton(sources.cancelbuttontextfieldRec, "cancel")) {
 					*sources.textfieldname = { 0 };
 					*sources.textfieldlabel = { 0 };
 					*sources.textfieldtooltip = { 0 };
 					sources.textfieldlength = 0;
 					sources.textfieldvalidate = false;
 					sources.textfieldelementtext = false;
+					editingWidget = false;
 					current_type = NO_TYPE;
 				}
-				if (GuiButton(sources.cancelbuttontextfieldRec, "cancel"))
-					current_type = NO_TYPE;
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.textfieldnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textfieldnameRec);
@@ -911,29 +1090,61 @@ int main() {
 				DrawText("NumberField min value:", 370, 360, 15, WHITE);
 				GuiSpinner(sources.numberfieldminRec, "", &sources.numberfieldmin, -100, 100, false);
 
-				if (GuiButton(sources.addbuttonnumberfieldRec, "add")) {
-					Components::Widget numberfield;
-					numberfield.component_type = NUMBER_TYPE;
-					numberfield.name = sources.numberfieldname;
-					numberfield.label = sources.numberfieldlabel;
-					numberfield.has_tooltip = sources.numberfieldtooltip;
-					numberfield.step = sources.numberfieldstep;
-					numberfield.max = sources.numberfieldmax;
-					numberfield.min = sources.numberfieldmin;
-					numberfield.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(numberfield);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"NumberField - " + (std::string)sources.numberfieldname);
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttonnumberfieldRec, "add")) {
+						Components::Widget numberfield;
+						numberfield.component_type = NUMBER_TYPE;
+						numberfield.name = sources.numberfieldname;
+						numberfield.label = sources.numberfieldlabel;
+						numberfield.has_tooltip = sources.numberfieldtooltip;
+						numberfield.step = sources.numberfieldstep;
+						numberfield.max = sources.numberfieldmax;
+						numberfield.min = sources.numberfieldmin;
+						numberfield.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(numberfield);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"NumberField - " + (std::string)sources.numberfieldname);
+						*sources.numberfieldname = { 0 };
+						*sources.numberfieldlabel = { 0 };
+						*sources.numberfieldtooltip = { 0 };
+						sources.numberfieldstep = 0;
+						sources.numberfieldmax = 0;
+						sources.numberfieldmin = 0;
+						current_type = NO_TYPE;
+					}
+				}
+				else {
+					if (GuiButton(sources.addbuttonnumberfieldRec, "edit")) {
+						Components::Widget numberfield;
+						numberfield.component_type = NUMBER_TYPE;
+						numberfield.name = sources.numberfieldname;
+						numberfield.label = sources.numberfieldlabel;
+						numberfield.has_tooltip = sources.numberfieldtooltip;
+						numberfield.step = sources.numberfieldstep;
+						numberfield.max = sources.numberfieldmax;
+						numberfield.min = sources.numberfieldmin;
+						numberfield.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = numberfield;
+						*sources.numberfieldname = { 0 };
+						*sources.numberfieldlabel = { 0 };
+						*sources.numberfieldtooltip = { 0 };
+						sources.numberfieldstep = 0;
+						sources.numberfieldmax = 0;
+						sources.numberfieldmin = 0;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
+				}
+				if (GuiButton(sources.cancelbuttonnumberfieldRec, "cancel")) {
 					*sources.numberfieldname = { 0 };
 					*sources.numberfieldlabel = { 0 };
 					*sources.numberfieldtooltip = { 0 };
 					sources.numberfieldstep = 0;
 					sources.numberfieldmax = 0;
 					sources.numberfieldmin = 0;
+					editingWidget = false;
 					current_type = NO_TYPE;
 				}
-				if (GuiButton(sources.cancelbuttonnumberfieldRec, "cancel"))
-					current_type = NO_TYPE;
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.numberfieldnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.numberfieldnameRec);
@@ -965,13 +1176,14 @@ int main() {
 				GuiTextBox(sources.textureselectortooltipRec, sources.textureselectortooltip, 64, sources.textureselectortooltipEnabled);
 				DrawText("Selector texture type:", 370, 305, 15, WHITE);
 
-				if (GuiButton(sources.addbuttontextureRec, "add")) {
-					Components::Widget texture_selector;
-					texture_selector.component_type = TEXTURE_TYPE;
-					texture_selector.name = sources.textureselectorname;
-					texture_selector.label = sources.textureselectorlabel;
-					texture_selector.has_tooltip = sources.textureselectortooltip;
-					switch (sources.textureselectorindex) {
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttontextureRec, "add")) {
+						Components::Widget texture_selector;
+						texture_selector.component_type = TEXTURE_TYPE;
+						texture_selector.name = sources.textureselectorname;
+						texture_selector.label = sources.textureselectorlabel;
+						texture_selector.has_tooltip = sources.textureselectortooltip;
+						switch (sources.textureselectorindex) {
 						case 0:
 							texture_selector.selector_content = "block_textures";
 							break;
@@ -996,24 +1208,77 @@ int main() {
 						case 7:
 							texture_selector.selector_content = "other_textures";
 							break;
+						}
+						texture_selector.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(texture_selector);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Texture Selector - " + (std::string)sources.textureselectorname);
+						*sources.textureselectorname = { 0 };
+						*sources.textureselectorlabel = { 0 };
+						*sources.textureselectortooltip = { 0 };
+						sources.textureselectorEnabled = false;
+						sources.textureselectorindex = 0;
+						current_type = NO_TYPE;
 					}
-					texture_selector.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(texture_selector);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Texture Selector - " + (std::string)sources.textureselectorname);
-					*sources.textureselectorname = { 0 };
-					*sources.textureselectorlabel = { 0 };
-					*sources.textureselectortooltip = { 0 };
-					sources.textureselectorEnabled = false;
-					sources.textureselectorindex = 0;
-					current_type = NO_TYPE;
+				}
+				else {
+					if (GuiButton(sources.addbuttontextureRec, "edit")) {
+						Components::Widget texture_selector;
+						texture_selector.component_type = TEXTURE_TYPE;
+						texture_selector.name = sources.textureselectorname;
+						texture_selector.label = sources.textureselectorlabel;
+						texture_selector.has_tooltip = sources.textureselectortooltip;
+						switch (sources.textureselectorindex) {
+						case 0:
+							texture_selector.selector_content = "block_textures";
+							break;
+						case 1:
+							texture_selector.selector_content = "item_textures";
+							break;
+						case 2:
+							texture_selector.selector_content = "entity_textures";
+							break;
+						case 3:
+							texture_selector.selector_content = "effect_textures";
+							break;
+						case 4:
+							texture_selector.selector_content = "particle_textures";
+							break;
+						case 5:
+							texture_selector.selector_content = "screen_textures";
+							break;
+						case 6:
+							texture_selector.selector_content = "armor_textures";
+							break;
+						case 7:
+							texture_selector.selector_content = "other_textures";
+							break;
+						}
+						texture_selector.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = texture_selector;
+						*sources.textureselectorname = { 0 };
+						*sources.textureselectorlabel = { 0 };
+						*sources.textureselectortooltip = { 0 };
+						sources.textureselectorEnabled = false;
+						sources.textureselectorindex = 0;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
 				}
 
 				GuiDropdownBox(sources.textureselectortypeRec, sources.textureselectortext.c_str(), &sources.textureselectorindex, sources.textureselectorEnabled);
 
-				if (!sources.textureselectorEnabled)
-					if (GuiButton(sources.cancelbuttontextureRec, "cancel"))
+				if (!sources.textureselectorEnabled) {
+					if (GuiButton(sources.cancelbuttontextureRec, "cancel")) {
+						*sources.textureselectorname = { 0 };
+						*sources.textureselectorlabel = { 0 };
+						*sources.textureselectortooltip = { 0 };
+						sources.textureselectorEnabled = false;
+						sources.textureselectorindex = 0;
+						editingWidget = false;
 						current_type = NO_TYPE;
+					}
+				}
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.textureselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.textureselectornameRec);
@@ -1033,40 +1298,79 @@ int main() {
 				GuiTextBox(sources.modelselectortooltipRec, sources.modelselectortooltip, 64, sources.modelselectortooltipEnabled);
 				DrawText("Selector texture type:", 370, 305, 15, WHITE);
 
-				if (GuiButton(sources.addbuttonmodelRec, "add")) {
-					Components::Widget model_selector;
-					model_selector.component_type = MODEL_TYPE;
-					model_selector.name = sources.modelselectorname;
-					model_selector.label = sources.modelselectorlabel;
-					model_selector.has_tooltip = sources.modelselectortooltip;
-					switch (sources.modelselectorindex) {
-					case 0:
-						model_selector.selector_content = "java_models";
-						break;
-					case 1:
-						model_selector.selector_content = "json_models";
-						break;
-					case 2:
-						model_selector.selector_content = "obj_models";
-						break;
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttonmodelRec, "add")) {
+						Components::Widget model_selector;
+						model_selector.component_type = MODEL_TYPE;
+						model_selector.name = sources.modelselectorname;
+						model_selector.label = sources.modelselectorlabel;
+						model_selector.has_tooltip = sources.modelselectortooltip;
+						switch (sources.modelselectorindex) {
+						case 0:
+							model_selector.selector_content = "java_models";
+							break;
+						case 1:
+							model_selector.selector_content = "json_models";
+							break;
+						case 2:
+							model_selector.selector_content = "obj_models";
+							break;
+						}
+						model_selector.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(model_selector);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Model Selector - " + (std::string)sources.modelselectorname);
+						*sources.modelselectorname = { 0 };
+						*sources.modelselectorlabel = { 0 };
+						*sources.modelselectortooltip = { 0 };
+						sources.modelselectorEnabled = false;
+						sources.modelselectorindex = 0;
+						current_type = NO_TYPE;
 					}
-					model_selector.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(model_selector);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Model Selector - " + (std::string)sources.modelselectorname);
-					*sources.modelselectorname = { 0 };
-					*sources.modelselectorlabel = { 0 };
-					*sources.modelselectortooltip = { 0 };
-					sources.modelselectorEnabled = false;
-					sources.modelselectorindex = 0;
-					current_type = NO_TYPE;
+				}
+				else {
+					if (GuiButton(sources.addbuttonmodelRec, "edit")) {
+						Components::Widget model_selector;
+						model_selector.component_type = MODEL_TYPE;
+						model_selector.name = sources.modelselectorname;
+						model_selector.label = sources.modelselectorlabel;
+						model_selector.has_tooltip = sources.modelselectortooltip;
+						switch (sources.modelselectorindex) {
+						case 0:
+							model_selector.selector_content = "java_models";
+							break;
+						case 1:
+							model_selector.selector_content = "json_models";
+							break;
+						case 2:
+							model_selector.selector_content = "obj_models";
+							break;
+						}
+						model_selector.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = model_selector;
+						*sources.modelselectorname = { 0 };
+						*sources.modelselectorlabel = { 0 };
+						*sources.modelselectortooltip = { 0 };
+						sources.modelselectorEnabled = false;
+						sources.modelselectorindex = 0;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
 				}
 
 				GuiDropdownBox(sources.modelselectortypeRec, sources.modelselectortext.c_str(), &sources.modelselectorindex, sources.modelselectorEnabled);
 
-				if (!sources.modelselectorEnabled)
-					if (GuiButton(sources.cancelbuttonmodelRec, "cancel"))
+				if (!sources.modelselectorEnabled) {
+					if (GuiButton(sources.cancelbuttonmodelRec, "cancel")) {
+						*sources.modelselectorname = { 0 };
+						*sources.modelselectorlabel = { 0 };
+						*sources.modelselectortooltip = { 0 };
+						sources.modelselectorEnabled = false;
+						sources.modelselectorindex = 0;
+						editingWidget = false;
 						current_type = NO_TYPE;
+					}
+				}
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.modelselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.modelselectornameRec);
@@ -1086,40 +1390,79 @@ int main() {
 				GuiTextBox(sources.itemselectortooltipRec, sources.itemselectortooltip, 64, sources.itemselectortooltipEnabled);
 				DrawText("Selector texture type:", 370, 305, 15, WHITE);
 
-				if (GuiButton(sources.addbuttonitemRec, "add")) {
-					Components::Widget item_selector;
-					item_selector.component_type = ITEM_TYPE;
-					item_selector.name = sources.itemselectorname;
-					item_selector.label = sources.itemselectorlabel;
-					item_selector.has_tooltip = sources.itemselectortooltip;
-					switch (sources.itemselectorindex) {
-					case 0:
-						item_selector.selector_content = "items";
-						break;
-					case 1:
-						item_selector.selector_content = "blocks";
-						break;
-					case 2:
-						item_selector.selector_content = "itemsandblocks";
-						break;
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttonitemRec, "add")) {
+						Components::Widget item_selector;
+						item_selector.component_type = ITEM_TYPE;
+						item_selector.name = sources.itemselectorname;
+						item_selector.label = sources.itemselectorlabel;
+						item_selector.has_tooltip = sources.itemselectortooltip;
+						switch (sources.itemselectorindex) {
+						case 0:
+							item_selector.selector_content = "items";
+							break;
+						case 1:
+							item_selector.selector_content = "blocks";
+							break;
+						case 2:
+							item_selector.selector_content = "itemsandblocks";
+							break;
+						}
+						item_selector.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(item_selector);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Item Selector - " + (std::string)sources.itemselectorname);
+						*sources.itemselectorname = { 0 };
+						*sources.itemselectorlabel = { 0 };
+						*sources.itemselectortooltip = { 0 };
+						sources.itemselectorEnabled = false;
+						sources.itemselectorindex = 0;
+						current_type = NO_TYPE;
 					}
-					item_selector.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(item_selector);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Item Selector - " + (std::string)sources.itemselectorname);
-					*sources.itemselectorname = { 0 };
-					*sources.itemselectorlabel = { 0 };
-					*sources.itemselectortooltip = { 0 };
-					sources.itemselectorEnabled = false;
-					sources.itemselectorindex = 0;
-					current_type = NO_TYPE;
+				}
+				else {
+					if (GuiButton(sources.addbuttonitemRec, "edit")) {
+						Components::Widget item_selector;
+						item_selector.component_type = ITEM_TYPE;
+						item_selector.name = sources.itemselectorname;
+						item_selector.label = sources.itemselectorlabel;
+						item_selector.has_tooltip = sources.itemselectortooltip;
+						switch (sources.itemselectorindex) {
+						case 0:
+							item_selector.selector_content = "items";
+							break;
+						case 1:
+							item_selector.selector_content = "blocks";
+							break;
+						case 2:
+							item_selector.selector_content = "itemsandblocks";
+							break;
+						}
+						item_selector.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = item_selector;
+						*sources.itemselectorname = { 0 };
+						*sources.itemselectorlabel = { 0 };
+						*sources.itemselectortooltip = { 0 };
+						sources.itemselectorEnabled = false;
+						sources.itemselectorindex = 0;
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
 				}
 
 				GuiDropdownBox(sources.itemselectortypeRec, sources.itemselectortext.c_str(), &sources.itemselectorindex, sources.itemselectorEnabled);
 
-				if (!sources.itemselectorEnabled)
-					if (GuiButton(sources.cancelbuttonitemRec, "cancel"))
+				if (!sources.itemselectorEnabled) {
+					if (GuiButton(sources.cancelbuttonitemRec, "cancel")) {
+						*sources.itemselectorname = { 0 };
+						*sources.itemselectorlabel = { 0 };
+						*sources.itemselectortooltip = { 0 };
+						sources.itemselectorEnabled = false;
+						sources.itemselectorindex = 0;
+						editingWidget = false;
 						current_type = NO_TYPE;
+					}
+				}
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.itemselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectornameRec);
@@ -1140,37 +1483,74 @@ int main() {
 				DrawText("Dropdown static members:", 370, 305, 15, WHITE);
 				GuiTextBox(sources.dropdownmembersRec, sources.dropdownmembers, 64, sources.dropdownmembersEnabled);
 
-				if (GuiButton(sources.addbuttondropdownRec, "add")) {
-					Components::Widget dropdown;
-					dropdown.component_type = DROPDOWN_TYPE;
-					dropdown.name = sources.dropdownname;
-					dropdown.label = sources.dropdownlabel;
-					dropdown.has_tooltip = sources.dropdowntooltip;
-					std::vector<std::string> members;
-					std::string member = "";
-					for (int i = 0; i < (sizeof(sources.dropdownmembers) / sizeof(char)) - 1; i++) {
-						if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',' && sources.dropdownmembers[i] != NULL)
-							member += sources.dropdownmembers[i];
-						else if (sources.dropdownmembers[i] == ',') {
-							members.push_back(member);
-							member = "";
+				if (!editingWidget) {
+					if (GuiButton(sources.addbuttondropdownRec, "add")) {
+						Components::Widget dropdown;
+						dropdown.component_type = DROPDOWN_TYPE;
+						dropdown.name = sources.dropdownname;
+						dropdown.label = sources.dropdownlabel;
+						dropdown.has_tooltip = sources.dropdowntooltip;
+						std::vector<std::string> members;
+						std::string member = "";
+						for (int i = 0; i < (sizeof(sources.dropdownmembers) / sizeof(char)) - 1; i++) {
+							if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',' && sources.dropdownmembers[i] != NULL)
+								member += sources.dropdownmembers[i];
+							else if (sources.dropdownmembers[i] == ',') {
+								members.push_back(member);
+								member = "";
+							}
 						}
+						members.push_back(member);
+						dropdown.members = members;
+						dropdown.page_index = components.indexes.at(sources.selectedPage);
+						components.widgets[sources.selectedPage].push_back(dropdown);
+						components.indexes[sources.selectedPage]++;
+						components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Static Dropdown - " + (std::string)sources.dropdownname);
+						*sources.dropdownname = { 0 };
+						*sources.dropdownlabel = { 0 };
+						*sources.dropdowntooltip = { 0 };
+						*sources.dropdownmembers = { 0 };
+						current_type = NO_TYPE;
 					}
-					members.push_back(member);
-					dropdown.members = members;
-					dropdown.page_index = components.indexes.at(sources.selectedPage);
-					components.widgets[sources.selectedPage].push_back(dropdown);
-					components.indexes[sources.selectedPage]++;
-					components.panel_list[sources.selectedPage] += ((components.indexes.at(sources.selectedPage) > 1 ? "\n" : "") + (std::string)"Static Dropdown - " + (std::string)sources.dropdownname);
+				}
+				else {
+					if (GuiButton(sources.addbuttondropdownRec, "edit")) {
+						Components::Widget dropdown;
+						dropdown.component_type = DROPDOWN_TYPE;
+						dropdown.name = sources.dropdownname;
+						dropdown.label = sources.dropdownlabel;
+						dropdown.has_tooltip = sources.dropdowntooltip;
+						std::vector<std::string> members;
+						std::string member = "";
+						for (int i = 0; i < (sizeof(sources.dropdownmembers) / sizeof(char)) - 1; i++) {
+							if (sources.dropdownmembers[i] != ' ' && sources.dropdownmembers[i] != ',' && sources.dropdownmembers[i] != NULL)
+								member += sources.dropdownmembers[i];
+							else if (sources.dropdownmembers[i] == ',') {
+								members.push_back(member);
+								member = "";
+							}
+						}
+						members.push_back(member);
+						dropdown.members = members;
+						dropdown.page_index = tempIndex;
+						components.widgets[widgetIndex[0]][widgetIndex[1]] = dropdown;
+						*sources.dropdownname = { 0 };
+						*sources.dropdownlabel = { 0 };
+						*sources.dropdowntooltip = { 0 };
+						*sources.dropdownmembers = { 0 };
+						editingWidget = false;
+						current_type = NO_TYPE;
+					}
+				}
+
+				if (GuiButton(sources.cancelbuttondropdownRec, "cancel")) {
 					*sources.dropdownname = { 0 };
 					*sources.dropdownlabel = { 0 };
 					*sources.dropdowntooltip = { 0 };
 					*sources.dropdownmembers = { 0 };
+					editingWidget = false;
 					current_type = NO_TYPE;
 				}
-
-				if (GuiButton(sources.cancelbuttondropdownRec, "cancel"))
-					current_type = NO_TYPE;
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.dropdownnameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.dropdownnameRec);

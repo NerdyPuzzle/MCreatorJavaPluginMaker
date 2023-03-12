@@ -1,0 +1,12 @@
+{
+  "id": "test_plugin",
+  "weight": 69,
+  "javaplugin": "net.nerdypuzzle.testplugin.Launcher",
+  "info":  {
+    "name": "testplugin",
+    "version": "1.0",
+    "description": "this is a testing plugin for test purposes",
+    "author": "your_mom",
+    "credits": "oh wow that is not meant to happen at all"
+  }
+}

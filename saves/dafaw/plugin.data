@@ -1,0 +1,118 @@
+PAGES_STRING 1\n2\n3
+PAGES_INT 3
+PAGE_0 Checkbox - fwdwsf\nTextField - testTextField\nTexture Selector - selectorTexture\nItem Selector - testItemSelector\nStatic Dropdown - testDropdownList\nEmpty Box\nNumberField - testNumberField\nModel Selector - testModelSelector
+INDEX_0 8
+PAGE_1 TextField - newTestField\nTexture Selector - test_test_var\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box
+INDEX_1 7
+PAGE_2 Empty Box\nItem Selector - fewf\nItem Selector - rgdhg
+INDEX_2 3
+PAGE_0_COMPONENTS [
+CHECKBOX {
+0
+fwdwsf
+wafwsasf wsaf wsf wsf awf \n
+fwfsf
+yes
+}
+TEXTFIELD {
+1
+testTextField
+This is a test textfield \n
+tooltips/textfield_test
+yes
+no
+15
+}
+TEXTURESELECTOR {
+2
+selectorTexture
+Testing texture selection: \n
+tooltips/selector_texture
+screen_textures
+}
+ITEMSELECTOR {
+3
+testItemSelector
+Select an item: \n
+tooltips/item_selector
+itemsandblocks
+}
+STATICDROPDOWN {
+4
+testDropdownList
+Select an option: \n
+tooltips/test_dropdown
+option1,option2,option3,option4
+}
+EMPTY_BOX {
+5
+}
+NUMBERFIELD {
+6
+testNumberField
+Select a number between -1 to 100 \n
+tooltips/test_number
+10
+94
+-1
+}
+MODELSELECTOR {
+7
+testModelSelector
+Select a model: \n
+tooltips/model_selector
+json_models
+}
+]
+PAGE_1_COMPONENTS [
+TEXTFIELD {
+0
+newTestField
+Write some text: \n
+tooltips/test_field_2
+yes
+yes
+9
+}
+TEXTURESELECTOR {
+1
+test_test_var
+Select another texture: \n
+tooltips/texture_2
+effect_textures
+}
+EMPTY_BOX {
+2
+}
+EMPTY_BOX {
+3
+}
+EMPTY_BOX {
+4
+}
+EMPTY_BOX {
+5
+}
+EMPTY_BOX {
+6
+}
+]
+PAGE_2_COMPONENTS [
+EMPTY_BOX {
+0
+}
+ITEMSELECTOR {
+1
+fewf
+egeg \n
+egsdg
+itemsandblocks
+}
+ITEMSELECTOR {
+2
+rgdhg
+hrhg \n
+dhrfhd
+items
+}
+]
