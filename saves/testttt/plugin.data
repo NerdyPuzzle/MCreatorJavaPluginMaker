@@ -1,0 +1,273 @@
+PAGES_STRING 1\n2\n3
+PAGES_INT 3
+PAGE_0 Checkbox - testcheckbox\nTextField - testtextfield\nNumberField - testnumberfield\nEmpty Box\nTexture Selector - testtexture\nModel Selector - testmodel\nItem Selector - testitem\nStatic Dropdown - testdropdown\nModel Selector - sege\nStatic Dropdown - wfwg\nTextField - fwsdwg\nCheckbox - wsfw\nCheckbox - wsdaws\nCheckbox - dwsfwg\nCheckbox - sdawf\nItem Selector - wwg\nItem Selector - sadawsgw\nItem Selector - sfsa\nNumberField - wsf\nStatic Dropdown - ssgsedgs\nStatic Dropdown - fawgws\nCheckbox - fedgsg
+INDEX_0 22
+PAGE_1 NumberField - dwgw\nModel Selector - wsfwsg\nNumberField - hdbed\nItem Selector - wsfwgws\nCheckbox - wwsag\nTextField - dgbsdh\nTexture Selector - gawg
+INDEX_1 7
+PAGE_2 Empty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nModel Selector - wt4eg
+INDEX_2 14
+PAGE_0_COMPONENTS [
+CHECKBOX {
+0
+testcheckbox
+gedfe \n
+gegseg
+yes
+}
+TEXTFIELD {
+1
+testtextfield
+egeg \n
+edghegeg
+yes
+yes
+6
+}
+NUMBERFIELD {
+2
+testnumberfield
+gdeg \n
+hedhedhgsedh
+1
+1
+1
+}
+EMPTY_BOX {
+3
+}
+TEXTURESELECTOR {
+4
+testtexture
+gsd \n
+sehedhs
+entity_textures
+}
+MODELSELECTOR {
+5
+testmodel
+wasg \n
+wgwg
+obj_models
+}
+ITEMSELECTOR {
+6
+testitem
+gedg \n
+hehsedh
+blocks
+}
+STATICDROPDOWN {
+7
+testdropdown
+gd \n
+gedgeh
+dhedhs,wfuaf,fkjahf,wkha,akw,wkgkw,akjhgwj,akjhgk
+}
+MODELSELECTOR {
+8
+sege
+gehseh \n
+edsdgs
+java_models
+}
+STATICDROPDOWN {
+9
+wfwg
+wgedgfs \n
+gedgedg
+egdgs
+}
+TEXTFIELD {
+10
+fwsdwg
+awwgw \n
+gfwgwg
+no
+no
+3
+}
+CHECKBOX {
+11
+wsfw
+gwgaw \n
+gawgawg
+yes
+}
+CHECKBOX {
+12
+wsdaws
+gwsgaws \n
+fwac
+yes
+}
+CHECKBOX {
+13
+dwsfwg
+wgaw \n
+gawga
+yes
+}
+CHECKBOX {
+14
+sdawf
+wgfwsgws \n
+gwgwg
+no
+}
+ITEMSELECTOR {
+15
+wwg
+wsagawga \n
+wsgwga
+items
+}
+ITEMSELECTOR {
+16
+sadawsgw
+gwsgw \n
+sgawgwg
+blocks
+}
+ITEMSELECTOR {
+17
+sfsa
+egeged \n
+gdgedg
+items
+}
+NUMBERFIELD {
+18
+wsf
+wgwsg \n
+wdwsfg
+1
+1
+1
+}
+STATICDROPDOWN {
+19
+ssgsedgs
+gfhsdh \n
+sdhsdh
+this,is,a,test,of,my,dropdown,system
+}
+STATICDROPDOWN {
+20
+fawgws
+ggswga \n
+wgwg
+I,guess,it,works,pretty,well,huh?
+}
+CHECKBOX {
+21
+fedgsg
+dhedhsd \n
+null
+yes
+}
+]
+PAGE_1_COMPONENTS [
+NUMBERFIELD {
+0
+dwgw
+fgwsgw \n
+gwsgwga
+10
+6
+-4
+}
+MODELSELECTOR {
+1
+wsfwsg
+vwsgawsg \n
+wgw
+obj_models
+}
+NUMBERFIELD {
+2
+hdbed
+hdhs \n
+edgdgedgeh
+4
+3
+2
+}
+ITEMSELECTOR {
+3
+wsfwgws
+gwga \n
+wgawgh
+blocks
+}
+CHECKBOX {
+4
+wwsag
+wsgws \n
+gwgwg
+yes
+}
+TEXTFIELD {
+5
+dgbsdh
+jtrdjrtdrf \n
+hdrhrfj
+yes
+yes
+69
+}
+TEXTURESELECTOR {
+6
+gawg
+gawg \n
+awhgsg
+armor_textures
+}
+]
+PAGE_2_COMPONENTS [
+EMPTY_BOX {
+0
+}
+EMPTY_BOX {
+1
+}
+EMPTY_BOX {
+2
+}
+EMPTY_BOX {
+3
+}
+EMPTY_BOX {
+4
+}
+EMPTY_BOX {
+5
+}
+EMPTY_BOX {
+6
+}
+EMPTY_BOX {
+7
+}
+EMPTY_BOX {
+8
+}
+EMPTY_BOX {
+9
+}
+EMPTY_BOX {
+10
+}
+EMPTY_BOX {
+11
+}
+EMPTY_BOX {
+12
+}
+MODELSELECTOR {
+13
+wt4eg
+etgse4tg \n
+null
+json_models
+}
+]

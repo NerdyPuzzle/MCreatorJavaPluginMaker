@@ -113,6 +113,8 @@ struct GuiComponentSources {
 
 	//edit, delete, main menu buttons
 	Rectangle editwidgetRec = { 965, 10, 225, 35 };
+	Rectangle deletewidgetRec = { 965, 50, 225, 35 };
+	Rectangle mainmenuRec = { 965, 90, 225, 35 };
 
 	//save and export buttons
 	Rectangle savebuttonRec = { 10, 525, 170, 30 };
@@ -247,7 +249,7 @@ struct GuiComponentSources {
 	char itemselectortooltip[64] = { 0 };
 	bool itemselectortooltipEnabled = false;
 	Rectangle itemselectortypeRec = { 570, 300, 265, 25 };
-	std::string itemselectortext = "ITEMS\nBLOCKS\nBOTH";
+	std::string itemselectortext = "BLOCKS AND ITEMS\nBLOCKS ONLY";
 	int itemselectorindex = 0;
 	bool itemselectorEnabled = false;
 	Rectangle addbuttonitemRec = { 500, 385, 100, 30 };
@@ -279,12 +281,15 @@ void save(PluginInfo info) {
 
 	pluginname << info.name;
 
-	variables << info.name << std::endl;
+	variables << info.name << " \\n" << std::endl;
 	variables << info.id << std::endl;
 	variables << info.weight << std::endl;
 	variables << info.author << std::endl;
 	variables << info.description << std::endl;
 	variables << info.credit << std::endl;
+
+	variables.close();
+	pluginname.close();
 
 }
 
@@ -306,13 +311,24 @@ void buildOrLoadSaves(bool& hasSave, PluginInfo& info, GuiComponentSources& sour
 	std::ifstream pluginname("saves/name/plgn.dat");
 	std::string name;
 	pluginname >> name;
+	pluginname.close();
 	buildDir("saves/" + name + "/");
 	std::ifstream variables("saves/" + name + "/variables.cfg");
 
 	if (variables.is_open()) {
-		variables >> info.name;
+		char tempc[64] = { 0 };
+		std::string temps = "";
+		variables >> temps;
+		while (temps != "\\n") {
+			for (int i = 0; i < temps.size(); i++)
+				tempc[i] = temps[i];
+			variables >> temps;
+		}
+		std::strcpy(info.name, tempc);
 		variables >> info.id;
-		variables >> info.weight;
+		std::string tempstR;
+		variables >> tempstR;
+		info.weight = std::stoi(tempstR);
 		variables >> info.author;
 		variables >> info.description;
 		variables >> info.credit;
@@ -432,6 +448,7 @@ void buildOrLoadSaves(bool& hasSave, PluginInfo& info, GuiComponentSources& sour
 			}
 			in >> temp; //end of this page's components
 		}
+		in.close();
 	}
 
 }
@@ -445,6 +462,7 @@ void buildJsonSave(PluginInfo info) {
 	buildDir(info.name + path);
 	std::ofstream out(info.name + path + "plugin.json");
 	lowerCaseString(lowername);
+	removeSpaces(lowername);
 
 	out << "{" << std::endl;
 	out << "  " << util.getProperty("id", (std::string)info.id) << ',' << std::endl;
@@ -458,11 +476,14 @@ void buildJsonSave(PluginInfo info) {
 	out << "    " << util.getProperty("credits", (std::string)info.credit) << std::endl;
 	out << "  }" << std::endl;
 	out << "}";
+
+	out.close();
 }
 
 void buildJavaLauncher(PluginInfo info) {
 	std::string name = (std::string)info.name;
 	lowerCaseString(name);
+	removeSpaces(name);
 	std::string path = "/src/main/java/net/nerdypuzzle/" + name + "/";
 	buildDir(info.name + path);
 	std::ofstream java((std::string)info.name + path + "Launcher.java");
@@ -477,6 +498,8 @@ void buildJavaLauncher(PluginInfo info) {
 	java << "       LOG.info(" + jUtil.simpleString("Plugin was loaded") + ");" << std::endl;
 	java << "   }" << std::endl;
 	java << "}";
+
+	java.close();
 }
 
 void saveComponentData(GuiComponentSources sources, Components components) {
@@ -595,6 +618,227 @@ void saveComponentData(GuiComponentSources sources, Components components) {
 	}
 }
 
+void exportPlugin(PluginInfo info, Components components, int pages) {
+	std::string nameS = (std::string)info.name;
+	lowerCaseString(nameS);
+	removeSpaces(nameS);
+	std::string path = (std::string)info.name + "/src/main/java/net/nerdypuzzle/" + nameS + "/"; //folder paths
+	std::string element_path = path + "element/types/";
+	std::string gui_path = path + "ui/modgui/";
+
+	buildDir(element_path); //make the dirs
+	buildDir(gui_path);
+
+	std::ofstream element_types(element_path + "PluginElementTypes.java"); //export the element registry
+	element_types << "package net.nerdypuzzle." + nameS + ".element.types;\n\n";
+	element_types << "public class PluginElementTypes {\n";
+	element_types << "	public static ModElementType<?> PLUGINELEMENT;\n\n";
+	element_types << "	public static void load() {\n";
+	element_types << "		PLUGINELEMENT = register(\n";
+	element_types << "			new ModElementType<>(" + sstring("pluginelement") + ", (Character) null, BaseType.OTHER, PluginElementGUI::new, PluginElement.class)\n";
+	element_types << "		);\n";
+	element_types << "	}\n";
+	element_types << "}";
+	element_types.close();
+
+	std::ofstream element_type(element_path + "PluginElement.java"); //export the element type
+	element_type << "package net.nerdypuzzle." + nameS + ".element.types;\n\n";
+	element_type << "public class PluginElement extends GeneratableElement {\n";
+	for (int i = 0; i < pages; i++) {
+		for (Components::Widget widget : components.widgets[i]) { //export all the variables
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				element_type << "	public boolean " + widget.name + ";\n";
+				break;
+			case TEXTFIELD_TYPE:
+			case DROPDOWN_TYPE:
+			case TEXTURE_TYPE:
+			case MODEL_TYPE:
+				element_type << "	public String " + widget.name + ";\n";
+				break;
+			case NUMBER_TYPE:
+				element_type << "	public float " + widget.name + ";\n";
+				break;
+			case ITEM_TYPE:
+				element_type << "	public MItemBlock " + widget.name + ";\n";
+				break;
+			}
+		}
+	}
+	element_type << std::endl;
+	element_type << "	private PluginElement() {\n";
+	element_type << "		this(null);\n";
+	element_type << "	}\n\n";
+	element_type << "	public PluginElement(ModElement element) {\n";
+	element_type << "		super(element);\n";
+	element_type << "	}\n";
+	element_type << "}";
+	element_type.close();
+
+	std::ofstream element_gui(gui_path + "PluginElementGUI.java"); //initialize all the variables of the GUI
+	element_gui << "package net.nerdypuzzle." + nameS + ".ui.modgui;\n\n";
+	element_gui << "public class PluginElementGUI extends ModElementGUI<PluginElement> {\n";
+	for (int i = 0; i < pages; i++) {
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				if (widget.should_append == "yes")
+					element_gui << "	private final JCheckBox " + widget.name + " = L10N.checkbox(" + sstring("elementgui.common.enable") + ");\n";
+				else
+					element_gui << "	private final JCheckBox " + widget.name + " = new JCheckBox();\n";
+				break;
+			case TEXTFIELD_TYPE:
+				if (widget.is_validated == "yes")
+					element_gui << "	private final VTextField " + widget.name + " = new VTextField(" + std::to_string(widget.length) + ");\n";
+				else
+					element_gui << "	private final JTextField " + widget.name + " = new JTextField(" + std::to_string(widget.length) + ");\n";
+				break;
+			case NUMBER_TYPE:
+				element_gui << "	private final JSpinner " + widget.name + " = new JSpinner(new SpinnerNumberModel(1.0, " + std::to_string(widget.min) + ", " + std::to_string(widget.max) + ", " + std::to_string(widget.step * 0.1) + "));\n";
+				break;
+			case TEXTURE_TYPE:
+				element_gui << "	private final VComboBox<String> " + widget.name + " = new SearchableComboBox<>();\n";
+				break;
+			case MODEL_TYPE:
+				element_gui << "	private final Model " + widget.name + "_default = new Model.BuiltInModel(" + sstring("Default") + ");\n";
+				element_gui << "	private final SearchableComboBox<Model> " + widget.name + " = new SearchableComboBox<>(new Model[] { " + widget.name + "_default });\n";
+				break;
+			case ITEM_TYPE:
+				element_gui << "	private MCItemHolder " + widget.name + ";\n";
+				break;
+			case DROPDOWN_TYPE:
+				element_gui << "	private final JComboBox<String> " + widget.name + " = new JComboBox<>(\n";
+				element_gui << "		new String[] { ";
+				bool firstMember = true;
+				for (std::string member : widget.members) {
+					if (firstMember) {
+						firstMember = false;
+						element_gui << sstring(member);
+					}
+					else
+						element_gui << ", " + sstring(member);
+				}
+				element_gui << " });\n";
+				break;
+			}
+		}
+	} //end of variable listing
+	element_gui << std::endl;
+	for (int i = 0; i < pages; i++) //add the validation groups
+		element_gui << "	private final ValidationGroup page" + std::to_string(i + 1) + "group = new ValidationGroup();\n";
+	element_gui << std::endl;
+	element_gui << "	public PluginElementGUI(MCreator mcreator, ModElement modElement, boolean editingMode) {\n";
+	element_gui << "		super(mcreator, modElement, editingMode);\n";
+	element_gui << "		this.initGUI();\n";
+	element_gui << "		super.finalizeGUI();\n";
+	element_gui << "	}\n\n";
+	element_gui << "	@Override\n";
+	element_gui << "	protected void initGUI() {\n";
+	for (int i = 0; i < pages; i++) { //initialize item holders
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case ITEM_TYPE:
+				element_gui << "		" + widget.name + " = new MCItemHolder(mcreator, ElementUtil::";
+				if (widget.selector_content == "items")
+					element_gui << "loadBlocksAndItems);\n";
+				else if (widget.selector_content == "blocks")
+					element_gui << "loadBlocks);\n";
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << std::endl;
+	for (int i = 0; i < pages; i++) { //write all the panel code
+		std::string pageIndexStr = std::to_string(i + 1);
+		element_gui << "		JPanel pane" + pageIndexStr + " = new JPanel(new BorderLayout(10, 10));\n";
+		element_gui << "		JPanel page" + pageIndexStr + "Panel = new JPanel(new GridLayout(" + std::to_string(components.indexes[i]) + ", 2, 10, 10));\n";
+		element_gui << "		pane" + pageIndexStr + ".setOpaque(false);\n";
+		element_gui << "		page" + pageIndexStr + "Panel.setOpaque(false);\n\n";
+		for (Components::Widget widget : components.widgets[i]) {
+			bool hasTooltip = widget.has_tooltip != "null";
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				if (hasTooltip) {
+					element_gui << "		page" + pageIndexStr + "Panel.add(HelpUtils.wrapWithHelpButton(this.withEntry(" + sstring(widget.has_tooltip) + "),\n";
+					element_gui << "				L10N.label(\"elementgui.element." + toLowerCaseStr(widget.name) + "\")));\n";
+				}
+				else
+					element_gui << "		page" + pageIndexStr + "Panel.add(L10N.label(\"elementgui.element." + toLowerCaseStr(widget.name) + "\"));\n";
+				element_gui << "		page" + pageIndexStr + "Panel.add(" + widget.name + ");\n\n";
+				break;
+			case TEXTFIELD_TYPE:
+			case NUMBER_TYPE:
+			case TEXTURE_TYPE:
+			case MODEL_TYPE:
+			case ITEM_TYPE:
+			case DROPDOWN_TYPE:
+				if (hasTooltip) {
+					element_gui << "		page" + pageIndexStr + "Panel.add(HelpUtils.wrapWithHelpButton(this.withEntry(" + sstring(widget.has_tooltip) + "),\n";
+					element_gui << "				L10N.label(\"elementgui.element." + toLowerCaseStr(widget.name) + "\")));\n";
+				}
+				else
+					element_gui << "		page" + pageIndexStr + "Panel.add(L10N.label(\"elementgui.element." + toLowerCaseStr(widget.name) + "\"));\n";
+				element_gui << "		page" + pageIndexStr + "Panel.add(" + widget.name + ");\n\n";
+				break;
+			case EMPTY_BOX:
+				element_gui << "		page" + pageIndexStr + "Panel.add(new JEmptyBox()); page" + pageIndexStr + "Panel.add(new JEmptyBox());\n\n";
+				break;
+			}
+		}
+		element_gui << "		pane" + pageIndexStr + ".add(" + sstring("Center") + ", PanelUtils.totalCenterInPanel(page" + pageIndexStr + "Panel));\n\n";
+	} //end of panel sorting
+	for (int i = 0; i < pages; i++) { //set checkboxes opaque
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				element_gui << "		" + widget.name + ".setOpaque(false);\n";
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << std::endl;
+	for (int i = 0; i < pages; i++) { //add validated elements
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case TEXTFIELD_TYPE:
+				if (widget.is_validated == "yes")
+					element_gui << "		page" + std::to_string(i + 1) + "group.addValidationElement(" + widget.name + ");\n";
+				break;
+			case TEXTURE_TYPE:
+			case MODEL_TYPE:
+				element_gui << "		page" + std::to_string(i + 1) + "group.addValidationElement(" + widget.name + ");\n";
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << std::endl;
+	for (int i = 0; i < pages; i++) { //set element name in textfields
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case TEXTFIELD_TYPE:
+				if (widget.has_elementname == "yes") {
+					element_gui << "		if (!isInEditingMode) {\n";
+					element_gui << "			" + widget.name + ".setText(StringUtils.machineToReadableName(modElement.getName()));\n";
+					element_gui << "		}\n";
+				}
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << std::endl;
+	for (int i = 0; i < pages; i++)
+		element_gui << "		addPage(L10N.t(\"elementgui.element.page" + std::to_string(i + 1) + "\"), pane" + std::to_string(i + 1) + ");\n";
+	element_gui << "	}\n\n";
+	element_gui << "	@Override\n";
+	element_gui << "	protected AggregatedValidationResult validatePage(int page) {\n";
+	for (int i = 0; i < pages; i++) {
+		element_gui << "		if (page == " + std::to_string(i) + ")\n";
+		element_gui << "			return new AggregatedValidationResult(page" + std::to_string(i + 1) + "group);\n";
+	}
+	element_gui << "	}\n\n";
+	element_gui.close();
+}
+
 int main() {
 
 	Image icon = LoadImage("mcreator.png");
@@ -641,7 +885,6 @@ int main() {
 
 	Texture2D texture = LoadTexture("mcreator.png");
 
-	// IMPORTANT
 	buildOrLoadSaves(hasSaveFile, info, sources, components);
 
 	while (!WindowShouldClose()) {
@@ -801,6 +1044,7 @@ int main() {
 
 			sources.old = view;
 
+			//add and remove page buttons
 			if (GuiButton(sources.addpagebuttonRec, "add page")) {
 				sources.pagesCount++;
 				sources.pages += ("\n" + std::to_string(sources.pagesCount));
@@ -817,9 +1061,11 @@ int main() {
 				}
 			}
 
+			//pages list
 			GuiGroupBox(sources.pageborderRec, "Pages");
 			sources.selectedPage = GuiListView(sources.pagelistRec, sources.pages.c_str(), &sources.pageIndex, sources.selectedPage);
 
+			//right side buttons
 			if (GuiButton(sources.editwidgetRec, "edit widget")) {
 				editingWidget = true;
 				for (int i = 0; i < components.widgets[sources.selectedPage].size(); i++)
@@ -897,8 +1143,6 @@ int main() {
 								index3 = 0;
 							else if (tempWidget.selector_content == "blocks")
 								index3 = 1;
-							else if (tempWidget.selector_content == "itemsandblocks")
-								index3 = 2;
 							sources.itemselectorindex = index3;
 							break;
 						case DROPDOWN_TYPE:
@@ -922,10 +1166,68 @@ int main() {
 							current_type = type;
 					}
 			}
+			if (GuiButton(sources.deletewidgetRec, "delete widget")) {
+				std::vector<Components::Widget> widgetslist;
+				std::string panellist = "";
+				int offset = 0;
+				bool first2 = true;
+				for (Components::Widget widget : components.widgets[sources.selectedPage]) {
+					if (widget.page_index == sources.cache) {
+						offset++;
+						components.indexes[sources.selectedPage]--;
+					}
+					else {
+						switch (widget.component_type) {
+						case CHECKBOX_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Checkbox - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case TEXTFIELD_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"TextField - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case NUMBER_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"NumberField - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case EMPTY_BOX:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Empty Box";
+							widget.page_index -= offset;
+							break;
+						case TEXTURE_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Texture Selector - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case MODEL_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Model Selector - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case ITEM_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Item Selector - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						case DROPDOWN_TYPE:
+							panellist += (!first2 ? "\n" : "") + (std::string)"Static Dropdown - " + widget.name;
+							widget.page_index -= offset;
+							break;
+						}
+						first2 = false;
+						widgetslist.push_back(widget);
+					}
+				}
+				components.widgets[sources.selectedPage] = widgetslist;
+				components.panel_list[sources.selectedPage] = panellist;
+			}
+			if (GuiButton(sources.mainmenuRec, "main menu")) {
+				editingPlugin = false;
+				canSetType = false;
+			}
 
+			//left botton save and export buttons
 			if (GuiButton(sources.savebuttonRec, "save plugin"))
 				saveComponentData(sources, components);
-			GuiButton(sources.exportbuttonRec, "export plugin");
+			if (GuiButton(sources.exportbuttonRec, "export plugin"))
+				exportPlugin(info, components, sources.pagesCount);
 		}
 
 		if (current_type != NO_TYPE) {
@@ -1404,9 +1706,6 @@ int main() {
 						case 1:
 							item_selector.selector_content = "blocks";
 							break;
-						case 2:
-							item_selector.selector_content = "itemsandblocks";
-							break;
 						}
 						item_selector.page_index = components.indexes.at(sources.selectedPage);
 						components.widgets[sources.selectedPage].push_back(item_selector);
@@ -1433,9 +1732,6 @@ int main() {
 							break;
 						case 1:
 							item_selector.selector_content = "blocks";
-							break;
-						case 2:
-							item_selector.selector_content = "itemsandblocks";
 							break;
 						}
 						item_selector.page_index = tempIndex;

@@ -269,9 +269,29 @@ namespace gez {
         }
     }
 
-    void lowerCaseString(std::string &string) {
+    void lowerCaseString(std::string& string) {
         std::transform(string.begin(), string.end(), string.begin(),
             [](unsigned char c) { return std::tolower(c); });
+    }
+
+    std::string toLowerCaseStr(std::string string) {
+        std::transform(string.begin(), string.end(), string.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        return string;
+    }
+
+    void removeSpaces(std::string& inputStr) {
+        std::string outputStr = "";
+        for (int i = 0; i < inputStr.length(); i++) {
+            if (inputStr[i] != ' ') {
+                outputStr += inputStr[i];
+            }
+        }
+        inputStr = outputStr;
+    }
+
+    std::string sstring(std::string string) {
+        return '"' + string + '"';
     }
 
     /*
