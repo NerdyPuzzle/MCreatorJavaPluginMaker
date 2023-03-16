@@ -1,11 +1,11 @@
 PAGES_STRING 1\n2\n3
 PAGES_INT 3
-PAGE_0 Checkbox - testcheckbox\nTextField - testtextfield\nNumberField - testnumberfield\nEmpty Box\nTexture Selector - testtexture\nModel Selector - testmodel\nItem Selector - testitem\nStatic Dropdown - testdropdown\nModel Selector - sege\nStatic Dropdown - wfwg\nTextField - fwsdwg\nCheckbox - wsfw\nCheckbox - wsdaws\nCheckbox - dwsfwg\nCheckbox - sdawf\nItem Selector - wwg\nItem Selector - sadawsgw\nItem Selector - sfsa\nNumberField - wsf\nStatic Dropdown - ssgsedgs\nStatic Dropdown - fawgws\nCheckbox - fedgsg
-INDEX_0 22
+PAGE_0 Checkbox - testcheckbox\nTextField - testtextfield\nNumberField - testnumberfield\nEmpty Box\nTexture Selector - testtexture\nModel Selector - testmodel\nItem Selector - testitem\nStatic Dropdown - testdropdown\nModel Selector - sege\nStatic Dropdown - wfwg\nTextField - fwsdwg\nCheckbox - wsfw\nCheckbox - wsdaws\nCheckbox - dwsfwg\nCheckbox - sdawf\nItem Selector - wwg\nItem Selector - sadawsgw\nItem Selector - sfsa\nNumberField - wsf\nStatic Dropdown - ssgsedgs\nStatic Dropdown - fawgws\nCheckbox - fedgsg\nItem Selector - gdrhdrh
+INDEX_0 23
 PAGE_1 NumberField - dwgw\nModel Selector - wsfwsg\nNumberField - hdbed\nItem Selector - wsfwgws\nCheckbox - wwsag\nTextField - dgbsdh\nTexture Selector - gawg
 INDEX_1 7
-PAGE_2 Empty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nModel Selector - wt4eg
-INDEX_2 14
+PAGE_2 Empty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nEmpty Box\nModel Selector - wt4eg\nCheckbox - wd\nEmpty Box\nEmpty Box\nEmpty Box
+INDEX_2 18
 PAGE_0_COMPONENTS [
 CHECKBOX {
 0
@@ -165,6 +165,13 @@ dhedhsd \n
 null
 yes
 }
+ITEMSELECTOR {
+22
+gdrhdrh
+rjdrfrfg \n
+drhnrj
+items
+}
 ]
 PAGE_1_COMPONENTS [
 NUMBERFIELD {
@@ -269,5 +276,21 @@ wt4eg
 etgse4tg \n
 null
 json_models
+}
+CHECKBOX {
+14
+wd
+awgswg \n
+gfafw
+no
+}
+EMPTY_BOX {
+15
+}
+EMPTY_BOX {
+16
+}
+EMPTY_BOX {
+17
 }
 ]

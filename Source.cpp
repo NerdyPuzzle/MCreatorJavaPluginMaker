@@ -310,7 +310,7 @@ void buildOrLoadSaves(bool& hasSave, PluginInfo& info, GuiComponentSources& sour
 	buildDir("saves/name/");
 	std::ifstream pluginname("saves/name/plgn.dat");
 	std::string name;
-	pluginname >> name;
+	getline(pluginname, name); //temporary solution, fix it properly
 	pluginname.close();
 	buildDir("saves/" + name + "/");
 	std::ifstream variables("saves/" + name + "/variables.cfg");
@@ -506,7 +506,7 @@ void saveComponentData(GuiComponentSources sources, Components components) {
 	if (!components.widgets.empty()) {
 		std::ifstream pluginname("saves/name/plgn.dat");
 		std::string name;
-		pluginname >> name;
+		getline(pluginname, name); //temporary fix, fix this properly
 		pluginname.close();
 
 		std::ofstream out("saves/" + name + "/plugin.data");
@@ -622,12 +622,18 @@ void exportPlugin(PluginInfo info, Components components, int pages) {
 	std::string nameS = (std::string)info.name;
 	lowerCaseString(nameS);
 	removeSpaces(nameS);
-	std::string path = (std::string)info.name + "/src/main/java/net/nerdypuzzle/" + nameS + "/"; //folder paths
+	std::ifstream nameget("saves/name/plgn.dat");
+	std::string nameStr;
+	getline(nameget, nameStr);
+	nameget.close();
+	std::string path = nameStr + "/src/main/java/net/nerdypuzzle/" + nameS + "/"; //folder paths
 	std::string element_path = path + "element/types/";
 	std::string gui_path = path + "ui/modgui/";
+	std::string texts_path = nameStr + "/src/main/resources/lang/";
 
 	buildDir(element_path); //make the dirs
 	buildDir(gui_path);
+	buildDir(texts_path);
 
 	std::ofstream element_types(element_path + "PluginElementTypes.java"); //export the element registry
 	element_types << "package net.nerdypuzzle." + nameS + ".element.types;\n\n";
@@ -836,7 +842,122 @@ void exportPlugin(PluginInfo info, Components components, int pages) {
 		element_gui << "			return new AggregatedValidationResult(page" + std::to_string(i + 1) + "group);\n";
 	}
 	element_gui << "	}\n\n";
+	element_gui << "	@Override\n";
+	element_gui << "	public void reloadDataLists() {\n";
+	element_gui << "		super.reloadDataLists();\n";
+	for (int i = 0; i < pages; i++) { //fill selectors with content
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case TEXTURE_TYPE:
+				element_gui << std::endl;
+				element_gui << "		ComboBoxUtil.updateComboBoxContents(" + widget.name + ", ListUtils.merge(Collections.singleton(\"\"),\n";
+				element_gui << "		mcreator.getFolderManager().getTexturesList(TextureType.";
+				if (widget.selector_content == "block_textures")
+					element_gui << "BLOCK";
+				else if (widget.selector_content == "item_textures")
+					element_gui << "ITEM";
+				else if (widget.selector_content == "entity_textures")
+					element_gui << "ENTITY";
+				else if (widget.selector_content == "effect_textures")
+					element_gui << "EFFECT";
+				else if (widget.selector_content == "particle_textures")
+					element_gui << "PARTICLE";
+				else if (widget.selector_content == "screen_textures")
+					element_gui << "SCREEN";
+				else if (widget.selector_content == "armor_textures")
+					element_gui << "ARMOR";
+				else if (widget.selector_content == "other_textures")
+					element_gui << "OTHER";
+				element_gui << ").stream().map(File::getName)\n";
+				element_gui << "			.filter(s -> s.endsWith(\".png\")).collect(Collectors.toList())), \"\");\n";
+				break;
+			case MODEL_TYPE:
+				element_gui << std::endl;
+				element_gui << "		ComboBoxUtil.updateComboBoxContents(" + widget.name + ", ListUtils.merge(Collections.singletonList(" + widget.name + "_default" + "),\n";
+				if (widget.selector_content == "java_models") {
+					element_gui << "			Model.getModels(mcreator.getWorkspace()).stream()\n";
+					element_gui << "				.filter(el -> el.getType() == Model.Type.JAVA || el.getType() == Model.Type.MCREATOR)\n";
+					element_gui << "				.collect(Collectors.toList())));\n";
+				}
+				else {
+					element_gui << "			Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()\n";
+					element_gui << "				.filter(el -> el.getType() == Model.Type.";
+					if (widget.selector_content == "json_models")
+						element_gui << "JSON)\n";
+					else
+						element_gui << "OBJ)\n";
+					element_gui << "				.collect(Collectors.toList())));\n";
+				}
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << "	}\n\n";
+	element_gui << "	@Override\n";
+	element_gui << "	public void openInEditingMode(PluginElement element) {\n";
+	for (int i = 0; i < pages; i++) { //get the content of the widgets
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				element_gui << "		" + widget.name + ".setSelected(element." + widget.name + ");\n";
+				break;
+			case TEXTFIELD_TYPE:
+				element_gui << "		" + widget.name + ".setText(element." + widget.name + ");\n";
+				break;
+			case NUMBER_TYPE:
+				element_gui << "		" + widget.name + ".setValue(element." + widget.name + ");\n";
+				break;
+			case TEXTURE_TYPE:
+			case MODEL_TYPE:
+			case DROPDOWN_TYPE:
+				element_gui << "		" + widget.name + ".setSelectedItem(element." + widget.name + ");\n";
+				break;
+			case ITEM_TYPE:
+				element_gui << "		" + widget.name + ".setBlock(element." + widget.name + ");\n";
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << "	}\n\n";
+	element_gui << "	@Override\n";
+	element_gui << "	public PluginElement getElementFromGUI() {\n";
+	element_gui << "		PluginElement element = new PluginElement(modElement);\n";
+	for (int i = 0; i < pages; i++) { //set the content of the widgets
+		for (Components::Widget widget : components.widgets[i]) {
+			switch (widget.component_type) {
+			case CHECKBOX_TYPE:
+				element_gui << "		element." + widget.name + " = " + widget.name + ".isSelected();\n";
+				break;
+			case TEXTFIELD_TYPE:
+				element_gui << "		element." + widget.name + " = " + widget.name + ".getText();\n";
+				break;
+			case NUMBER_TYPE:
+				element_gui << "		element." + widget.name + " = (float) " + widget.name + ".getValue()\n";
+				break;
+			case TEXTURE_TYPE:
+			case MODEL_TYPE:
+			case DROPDOWN_TYPE:
+				element_gui << "		element." + widget.name + " = " + widget.name + ".getSelectedItem();\n";
+				break;
+			case ITEM_TYPE:
+				element_gui << "		element." + widget.name + " = " + widget.name + ".getBlock();\n";
+				break;
+			}
+		}
+	} //end of listing
+	element_gui << "	}\n";
+	element_gui << "}";
 	element_gui.close();
+
+	std::ofstream translation(texts_path + "texts.properties"); //export the translation key labels
+	for (int i = 0; i < pages; i++) { //get the labels of the widgets
+		translation << "elementgui.element.page" + std::to_string(i + 1) + "=Page " + std::to_string(i + 1) + "\n";
+		for (Components::Widget widget : components.widgets[i]) {
+			if (widget.component_type != EMPTY_BOX)
+				translation << "elementgui.element." + toLowerCaseStr(widget.name) + "=" + widget.label + "\n";
+		}
+	} //end of listing
+	translation.close();
 }
 
 int main() {
@@ -1745,10 +1866,9 @@ int main() {
 						current_type = NO_TYPE;
 					}
 				}
-
+				
 				GuiDropdownBox(sources.itemselectortypeRec, sources.itemselectortext.c_str(), &sources.itemselectorindex, sources.itemselectorEnabled);
 
-				if (!sources.itemselectorEnabled) {
 					if (GuiButton(sources.cancelbuttonitemRec, "cancel")) {
 						*sources.itemselectorname = { 0 };
 						*sources.itemselectorlabel = { 0 };
@@ -1758,7 +1878,6 @@ int main() {
 						editingWidget = false;
 						current_type = NO_TYPE;
 					}
-				}
 
 				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 					sources.itemselectornameEnabled = CheckCollisionPointRec({ (float)GetMouseX(), (float)GetMouseY() }, sources.itemselectornameRec);

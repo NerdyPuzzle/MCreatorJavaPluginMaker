@@ -22,6 +22,7 @@ public class PluginElement extends GeneratableElement {
 	public String ssgsedgs;
 	public String fawgws;
 	public boolean fedgsg;
+	public MItemBlock gdrhdrh;
 	public float dwgw;
 	public String wsfwsg;
 	public float hdbed;
@@ -30,6 +31,7 @@ public class PluginElement extends GeneratableElement {
 	public String dgbsdh;
 	public String gawg;
 	public String wt4eg;
+	public boolean wd;
 
 	private PluginElement() {
 		this(null);
